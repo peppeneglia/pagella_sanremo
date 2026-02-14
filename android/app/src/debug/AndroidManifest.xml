@@ -1,0 +1,21 @@
+<!-- ======================================================================= -->
+<!-- File: AndroidManifest.xml (debug)                                       -->
+<!-- Manifest specifico per la variante di build "debug".                    -->
+<!-- Le impostazioni qui definite vengono unite (merged) con il manifest     -->
+<!-- principale (main) durante la compilazione in modalita' debug.           -->
+<!-- ======================================================================= -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Il permesso INTERNET e' necessario per lo sviluppo e il debug.              -->
+    <!-- Nello specifico, lo strumento Flutter ha bisogno di questo permesso per     -->
+    <!-- comunicare con l'applicazione in esecuzione sul dispositivo/emulatore,      -->
+    <!-- permettendo funzionalita' di sviluppo essenziali come:                      -->
+    <!--   - Impostazione dei breakpoint per il debug                                -->
+    <!--   - Hot reload (ricaricamento rapido del codice senza riavvio)              -->
+    <!--   - Hot restart (riavvio rapido dell'app mantenendo lo stato)               -->
+    <!--   - Invio di comandi dalla DevTools di Flutter                              -->
+    <!-- NOTA: Questo permesso e' dichiarato anche nel manifest principale (main)    -->
+    <!-- perche' l'app necessita di accesso a Internet anche in produzione            -->
+    <!-- (Supabase, Google Sign-In, Google Ads). Qui viene ridichiarato per          -->
+    <!-- garantire la connettivita' durante le sessioni di debug.                    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>

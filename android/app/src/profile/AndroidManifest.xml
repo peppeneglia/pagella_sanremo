@@ -1,0 +1,19 @@
+<!-- ======================================================================= -->
+<!-- File: AndroidManifest.xml (profile)                                     -->
+<!-- Manifest specifico per la variante di build "profile".                  -->
+<!-- La modalita' "profile" viene utilizzata per analizzare le prestazioni   -->
+<!-- dell'app su un dispositivo reale, con ottimizzazioni parziali attive    -->
+<!-- ma con gli strumenti di profilazione (DevTools) ancora accessibili.     -->
+<!-- Le impostazioni qui vengono unite (merged) con il manifest principale.  -->
+<!-- ======================================================================= -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Il permesso INTERNET e' necessario per lo sviluppo e la profilazione.       -->
+    <!-- Nello specifico, lo strumento Flutter ha bisogno di questo permesso per     -->
+    <!-- comunicare con l'applicazione in esecuzione sul dispositivo, permettendo    -->
+    <!-- funzionalita' come:                                                         -->
+    <!--   - Impostazione dei breakpoint per il debug                                -->
+    <!--   - Hot reload (ricaricamento rapido del codice)                            -->
+    <!--   - Profilazione delle prestazioni tramite Flutter DevTools                 -->
+    <!--   - Monitoraggio dell'utilizzo di memoria e CPU                             -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>

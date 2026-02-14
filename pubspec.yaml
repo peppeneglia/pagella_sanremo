@@ -1,0 +1,126 @@
+# ===========================================================================
+# File: pubspec.yaml
+# File di configurazione principale del progetto Flutter "Pagella Sanremo".
+# Definisce il nome, la versione, le dipendenze e le risorse (asset)
+# dell'applicazione. Ogni modifica a questo file richiede l'esecuzione
+# di "flutter pub get" per aggiornare le dipendenze.
+# ===========================================================================
+
+# Nome del pacchetto: identificatore univoco dell'applicazione Flutter.
+# Utilizzato internamente da Dart per la risoluzione dei pacchetti.
+name: pagella_sanremo
+
+# Descrizione dell'app: breve testo che descrive lo scopo dell'applicazione.
+description: "App per votare le esibizioni di Sanremo 2026."
+
+# Impedisce la pubblicazione accidentale del pacchetto su pub.dev.
+# Questo progetto e' un'applicazione privata, non una libreria pubblica.
+publish_to: 'none'
+
+# Versione dell'applicazione nel formato "major.minor.patch+buildNumber".
+# - "1.0.0" e' il nome della versione mostrato agli utenti.
+# - "+1" e' il codice di versione numerico utilizzato dagli store (Play Store, App Store)
+#   per determinare se un aggiornamento e' disponibile.
+version: 1.0.0+1
+
+# Vincolo sull'ambiente: specifica la versione minima dell'SDK Dart richiesta.
+# "^3.5.0" significa che e' compatibile con Dart 3.5.0 e versioni successive
+# fino a (ma non inclusa) la prossima major version (4.0.0).
+environment:
+  sdk: ^3.5.0
+
+# ===========================================================================
+# Dipendenze di produzione: pacchetti necessari per il funzionamento dell'app.
+# ===========================================================================
+dependencies:
+  # Framework Flutter: il pacchetto principale del framework Flutter,
+  # fornisce tutti i widget e le funzionalita' di base per costruire l'interfaccia.
+  flutter:
+    sdk: flutter
+
+  # Flutter Riverpod: libreria di gestione dello stato (state management).
+  # Permette di gestire e condividere lo stato dell'app in modo reattivo,
+  # sicuro e testabile tra i vari widget.
+  flutter_riverpod: ^2.6.1
+
+  # Shared Preferences: permette di salvare dati semplici (stringhe, numeri, booleani)
+  # in modo persistente sul dispositivo. Utile per preferenze utente e cache leggera.
+  shared_preferences: ^2.5.1
+
+  # Feather Icons: set di icone eleganti e minimaliste (Feather Icons)
+  # da utilizzare nell'interfaccia utente dell'app.
+  feather_icons: ^1.2.0
+
+  # Supabase Flutter: client per Supabase, una piattaforma backend open source.
+  # Fornisce autenticazione, database in tempo reale (PostgreSQL),
+  # storage di file e funzioni serverless.
+  supabase_flutter: ^2.9.0
+
+  # Google Sign-In: permette agli utenti di autenticarsi nell'app
+  # utilizzando il proprio account Google. Integrato con Supabase per l'autenticazione.
+  google_sign_in: ^6.2.2
+
+  # Connectivity Plus: monitora lo stato della connessione di rete del dispositivo.
+  # Permette di sapere se l'utente e' connesso a Internet (Wi-Fi, dati mobili)
+  # e di reagire ai cambiamenti di connettivita'.
+  connectivity_plus: ^7.0.0
+
+  # Google Mobile Ads: SDK per la monetizzazione tramite annunci pubblicitari Google.
+  # Supporta banner, interstitial, rewarded e native ads.
+  google_mobile_ads: ^5.3.0
+
+# ===========================================================================
+# Dipendenze di sviluppo: pacchetti usati solo durante lo sviluppo e i test.
+# Non vengono inclusi nella build di produzione dell'app.
+# ===========================================================================
+dev_dependencies:
+  # Flutter Test: framework di testing per scrivere test unitari, di widget
+  # e di integrazione per l'applicazione Flutter.
+  flutter_test:
+    sdk: flutter
+
+  # Flutter Lints: set di regole di analisi statica (lint) raccomandate
+  # per i progetti Flutter. Aiuta a mantenere il codice pulito e consistente.
+  flutter_lints: ^5.0.0
+
+# ===========================================================================
+# Override delle dipendenze: forza l'utilizzo di versioni specifiche di pacchetti,
+# sovrascrivendo le versioni richieste da altre dipendenze.
+# Utile per risolvere conflitti di versione tra dipendenze transitive.
+# ===========================================================================
+dependency_overrides:
+  # App Links: forzato alla versione 7.0.0 per risolvere un conflitto
+  # di versione con altre dipendenze (es. supabase_flutter).
+  app_links: ^7.0.0
+
+# ===========================================================================
+# Configurazione Flutter: impostazioni specifiche del framework Flutter.
+# ===========================================================================
+flutter:
+  # Abilita l'uso delle icone Material Design nell'app.
+  # Necessario per utilizzare la classe Icons di Flutter.
+  uses-material-design: true
+
+  # ===========================================================================
+  # Font personalizzati: definisce i font inclusi nell'app.
+  # Ogni font viene caricato dai file .ttf nella cartella assets/fonts/.
+  # ===========================================================================
+  fonts:
+    # Famiglia di font "PlusJakartaSans": font sans-serif moderno e leggibile.
+    # Utilizzato come font principale dell'interfaccia utente dell'app.
+    - family: PlusJakartaSans
+      fonts:
+        # Variante Regular (peso predefinito 400): per il testo normale.
+        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+        # Variante Medium (peso 500): per testo con enfasi media.
+        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        # Variante SemiBold (peso 600): per sottotitoli e testo semi-grassetto.
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        # Variante Bold (peso 700): per titoli e testo in grassetto.
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+        # Variante ExtraBold (peso 800): per titoli grandi e testo molto enfatizzato.
+        - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
