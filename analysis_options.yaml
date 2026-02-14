@@ -1,32 +1,6 @@
-# Questo file configura l'analizzatore statico, che analizza il codice Dart
-# per individuare errori, avvertimenti e violazioni delle regole di stile (lint).
-#
-# I problemi identificati dall'analizzatore vengono mostrati nell'interfaccia
-# degli IDE compatibili con Dart (https://dart.dev/tools#ides-and-editors).
-# L'analizzatore puo' essere invocato anche da riga di comando
-# eseguendo `flutter analyze`.
-
-# La riga seguente attiva un insieme di regole lint raccomandate per le app,
-# i pacchetti e i plugin Flutter, progettate per incoraggiare buone pratiche
-# di programmazione.
 include: package:flutter_lints/flutter.yaml
 
 linter:
-  # Le regole lint applicate a questo progetto possono essere personalizzate
-  # nella sezione sottostante per disabilitare regole dal pacchetto
-  # `package:flutter_lints/flutter.yaml` incluso sopra, oppure per
-  # abilitare regole aggiuntive. Un elenco completo di tutte le regole
-  # lint disponibili e la relativa documentazione e' pubblicato su
-  # https://dart.dev/lints.
-  #
-  # Invece di disabilitare una regola lint per l'intero progetto nella
-  # sezione sottostante, e' possibile sopprimerla anche per una singola
-  # riga di codice o per un file Dart specifico, utilizzando la sintassi
-  # `// ignore: nome_della_regola` sulla riga interessata, oppure
-  # `// ignore_for_file: nome_della_regola` all'inizio del file.
   rules:
-    # avoid_print: false  # Decommentare per disabilitare la regola `avoid_print`
-    # prefer_single_quotes: true  # Decommentare per abilitare la regola `prefer_single_quotes`
-
-# Ulteriori informazioni su questo file sono disponibili su
-# https://dart.dev/guides/language/analysis-options
+    # avoid_print: false
+    # prefer_single_quotes: true

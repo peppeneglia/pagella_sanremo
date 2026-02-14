@@ -1,57 +1,25 @@
-// ===========================================================================
-// File: settings.gradle
-// Questo file configura le impostazioni di Gradle per il progetto Android.
-// Definisce la gestione dei plugin, i repository e i moduli inclusi nel progetto.
-// ===========================================================================
-
-// Blocco "pluginManagement": configura come Gradle trova e gestisce i plugin.
-// Questo blocco viene eseguito prima di qualsiasi altra configurazione.
 pluginManagement {
-    // Legge il percorso dell'SDK Flutter dal file "local.properties".
-    // Questo file viene generato automaticamente da Flutter e contiene
-    // il percorso locale dell'installazione dell'SDK Flutter sulla macchina dello sviluppatore.
     def flutterSdkPath = {
         def properties = new Properties()
-        // Carica il file local.properties che contiene le proprieta' locali del progetto
         file("local.properties").withInputStream { properties.load(it) }
-        // Recupera il valore della proprieta' "flutter.sdk"
         def flutterSdkPath = properties.getProperty("flutter.sdk")
-        // Verifica che il percorso dell'SDK Flutter sia stato impostato correttamente.
-        // Se non e' presente, la build fallisce con un messaggio di errore chiaro.
         assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
         return flutterSdkPath
     }()
 
-    // Include il progetto Gradle di Flutter che si trova all'interno dell'SDK.
-    // Questo permette a Gradle di utilizzare i plugin di build specifici di Flutter.
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
-    // Repository da cui Gradle scarica i plugin necessari per la build.
     repositories {
-        // Repository Google: contiene i plugin Android (AGP - Android Gradle Plugin)
         google()
-        // Maven Central: repository principale per plugin e librerie Java/Kotlin
         mavenCentral()
-        // Gradle Plugin Portal: portale ufficiale dei plugin Gradle
         gradlePluginPortal()
     }
 }
 
-// Blocco "plugins": dichiara i plugin utilizzati nel progetto con le relative versioni.
 plugins {
-    // Plugin Flutter per il caricamento automatico dei plugin Flutter.
-    // Gestisce la registrazione e l'integrazione dei plugin Flutter nel progetto Android.
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-    // Plugin Android Application (AGP): necessario per compilare e pacchettizzare
-    // l'applicazione Android. "apply false" significa che viene dichiarato qui
-    // ma applicato solo nel modulo specifico (app/build.gradle).
     id "com.android.application" version "8.7.3" apply false
-    // Plugin Kotlin per Android: aggiunge il supporto al linguaggio Kotlin.
-    // "apply false" per lo stesso motivo: viene applicato nel modulo app.
     id "org.jetbrains.kotlin.android" version "1.9.22" apply false
 }
 
-// Include il modulo ":app" nel progetto.
-// Questo dice a Gradle che la cartella "app/" contiene un sotto-progetto
-// che deve essere compilato come parte del progetto complessivo.
 include ":app"

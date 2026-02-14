@@ -1,42 +1,20 @@
-// ===========================================================================
-// File: build.gradle (livello root del progetto Android)
-// Questo file configura le impostazioni di build comuni a tutti i sotto-progetti
-// (moduli) dell'applicazione Android, inclusa l'app Flutter.
-// ===========================================================================
-
-// Blocco "allprojects": definisce i repository da cui tutti i sotto-progetti
-// scaricheranno le proprie dipendenze (librerie esterne).
 allprojects {
     repositories {
-        // Repository Google: contiene le librerie Android (AndroidX, Material, ecc.)
         google()
-        // Maven Central: il repository principale per le librerie Java/Kotlin
         mavenCentral()
     }
 }
 
-// Imposta la directory di output della build del progetto root
-// nella cartella "../build" (un livello sopra la cartella android/).
-// Questo mantiene i file di build organizzati fuori dalla cartella sorgente Android.
 rootProject.buildDir = "../build"
 
-// Per ogni sotto-progetto, imposta la directory di build all'interno
-// della cartella di build del progetto root, organizzata per nome del progetto.
-// Esempio: "../build/app" per il modulo ":app".
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 
-// Assicura che il sotto-progetto ":app" venga valutato (configurato)
-// prima degli altri sotto-progetti. Questo e' necessario perche'
-// altri plugin potrebbero dipendere dalla configurazione dell'app.
 subprojects {
     project.evaluationDependsOn(":app")
 }
 
-// Registra un task personalizzato chiamato "clean" di tipo Delete.
-// Quando eseguito (./gradlew clean), elimina l'intera directory di build
-// del progetto root, rimuovendo tutti i file compilati e gli artefatti.
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

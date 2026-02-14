@@ -1,88 +1,40 @@
-// ===========================================================================
-// File: app/build.gradle
-// Questo file configura la build del modulo principale dell'applicazione Android.
-// Contiene le impostazioni di compilazione, le versioni SDK, le opzioni di build
-// e il collegamento al progetto Flutter.
-// ===========================================================================
-
-// Blocco "plugins": applica i plugin necessari per questo modulo.
 plugins {
-    // Plugin Android Application: trasforma questo modulo in un'applicazione Android
-    // compilabile e installabile su dispositivi.
     id "com.android.application"
-    // Plugin Kotlin per Android: abilita il supporto al linguaggio Kotlin
-    // per scrivere codice nativo Android.
     id "kotlin-android"
-    // Plugin Gradle di Flutter: integra il sistema di build Flutter con Gradle,
-    // gestendo la compilazione del codice Dart e l'inclusione degli asset Flutter.
     id "dev.flutter.flutter-gradle-plugin"
 }
 
-// Blocco "android": contiene tutta la configurazione specifica di Android.
 android {
-    // Namespace: identifica univocamente il pacchetto dell'applicazione.
-    // Viene utilizzato per generare la classe R e per risolvere le risorse.
     namespace = "com.peppeneglia.pagella_sanremo"
-    // Versione dell'SDK di compilazione: definisce quale versione delle API Android
-    // viene utilizzata per compilare l'app. Il valore viene letto dalla configurazione Flutter.
     compileSdk = flutter.compileSdkVersion
-    // Versione dell'NDK (Native Development Kit): necessaria per compilare codice nativo (C/C++).
-    // Flutter lo utilizza internamente per il suo motore di rendering.
     ndkVersion = flutter.ndkVersion
 
-    // Opzioni di compilazione Java: specifica la versione del linguaggio Java
-    // utilizzata per la compatibilita' del codice sorgente e del bytecode generato.
-    // Java 11 e' richiesto dalle versioni recenti del plugin Android Gradle.
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // Opzioni di compilazione Kotlin: specifica la versione della JVM target
-    // per il bytecode generato dal compilatore Kotlin. Deve corrispondere
-    // alla versione Java impostata nelle compileOptions.
     kotlinOptions {
         jvmTarget = "11"
     }
 
-    // Configurazione predefinita dell'applicazione: contiene le impostazioni
-    // che si applicano a tutte le varianti di build (debug, release, ecc.).
     defaultConfig {
-        // ID univoco dell'applicazione: identifica l'app su Google Play Store
-        // e sul dispositivo dell'utente. Deve essere unico a livello mondiale.
         applicationId = "com.peppeneglia.pagella_sanremo"
-        // SDK minimo supportato: l'app non puo' essere installata su dispositivi
-        // con una versione Android inferiore a questa (API 21 = Android 5.0 Lollipop).
         minSdk = 21
-        // SDK target: la versione Android per cui l'app e' stata testata e ottimizzata.
-        // Il valore viene letto dalla configurazione Flutter.
         targetSdk = flutter.targetSdkVersion
-        // Codice di versione: numero intero incrementale usato dal Play Store
-        // per determinare se un aggiornamento e' disponibile. Letto da Flutter (pubspec.yaml).
         versionCode = flutter.versionCode
-        // Nome della versione: stringa leggibile dall'utente (es. "1.0.0").
-        // Letto dalla configurazione Flutter (pubspec.yaml).
         versionName = flutter.versionName
-        // MultiDex: abilita il supporto per applicazioni con piu' di 65.536 metodi.
-        // Necessario quando si utilizzano molte librerie/dipendenze.
         multiDexEnabled true
     }
 
-    // Tipi di build: configura le varianti di compilazione dell'app.
     buildTypes {
-        // Configurazione per la build di rilascio (produzione).
-        // NOTA: attualmente usa la configurazione di firma di debug.
-        // Per la pubblicazione sul Play Store, sostituire con una chiave di firma
-        // di rilascio (keystore) per garantire la sicurezza dell'app.
+        // TODO: sostituire con keystore di rilascio per il Play Store
         release {
             signingConfig = signingConfigs.debug
         }
     }
 }
 
-// Blocco "flutter": configurazione specifica del plugin Flutter.
-// "source" indica il percorso relativo alla radice del progetto Flutter
-// (due livelli sopra la cartella android/app/).
 flutter {
     source = "../.."
 }

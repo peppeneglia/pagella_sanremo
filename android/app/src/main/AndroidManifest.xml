@@ -1,23 +1,9 @@
-<!-- ======================================================================= -->
-<!-- File: AndroidManifest.xml (main)                                        -->
-<!-- Manifest principale dell'applicazione Android "Pagella Sanremo".        -->
-<!-- Questo file dichiara i permessi, i componenti e le configurazioni       -->
-<!-- necessarie per il funzionamento dell'app su tutti i tipi di build.      -->
-<!-- ======================================================================= -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permesso INTERNET: necessario per consentire all'app di effettuare          -->
-    <!-- connessioni di rete (es. comunicazione con Supabase, Google Sign-In, Ads).  -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Blocco "application": definisce le proprieta' globali dell'applicazione. -->
     <application
         android:label="Pagella Sanremo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <!-- ================================================================= -->
-        <!-- Activity principale: e' il punto di ingresso dell'app.            -->
-        <!-- Flutter utilizza questa Activity come contenitore per il suo       -->
-        <!-- motore di rendering e l'interfaccia utente Dart.                  -->
-        <!-- ================================================================= -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -27,53 +13,19 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- android:exported="true" - Permette al sistema di avviare questa Activity.       -->
-            <!-- android:launchMode="singleTop" - Evita di creare istanze duplicate dell'Activity -->
-            <!--   se e' gia' in cima allo stack delle attivita'.                                -->
-            <!-- android:taskAffinity="" - Isola l'Activity in un task separato.                  -->
-            <!-- android:theme="@style/LaunchTheme" - Tema mostrato durante l'avvio (splash).    -->
-            <!-- android:configChanges - L'Activity gestisce internamente questi cambiamenti      -->
-            <!--   di configurazione senza essere ricreata (rotazione, tastiera, lingua, ecc.).   -->
-            <!-- android:hardwareAccelerated="true" - Abilita l'accelerazione hardware GPU        -->
-            <!--   per un rendering piu' fluido.                                                  -->
-            <!-- android:windowSoftInputMode="adjustResize" - Ridimensiona il layout quando       -->
-            <!--   appare la tastiera virtuale, evitando che copra i campi di input.              -->
-
-            <!-- Specifica il tema Android da applicare a questa Activity non appena              -->
-            <!-- il processo Android viene avviato. Questo tema e' visibile all'utente            -->
-            <!-- mentre l'interfaccia Flutter si inizializza. Dopo l'inizializzazione,            -->
-            <!-- questo tema continua a determinare lo sfondo della finestra                      -->
-            <!-- dietro l'interfaccia Flutter.                                                    -->
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
-            <!-- Filtro di intent: dichiara che questa Activity e' il punto di ingresso -->
-            <!-- principale dell'app e deve apparire nel launcher (menu app) del dispositivo. -->
             <intent-filter>
-                <!-- ACTION_MAIN: indica che questa e' l'Activity principale dell'app. -->
                 <action android:name="android.intent.action.MAIN"/>
-                <!-- CATEGORY_LAUNCHER: fa apparire l'app nel launcher del dispositivo. -->
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- Non eliminare il meta-data qui sotto.                                        -->
-        <!-- Viene utilizzato dallo strumento Flutter per generare il file                -->
-        <!-- GeneratedPluginRegistrant.java, necessario per registrare automaticamente    -->
-        <!-- tutti i plugin Flutter nel progetto Android.                                 -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-    <!-- Blocco "queries": necessario per interrogare le attivita' che possono           -->
-    <!-- elaborare testo (Android 11+, API 30+). A causa delle restrizioni sulla         -->
-    <!-- visibilita' dei pacchetti introdotte in Android 11, e' necessario dichiarare    -->
-    <!-- esplicitamente quali intent l'app intende utilizzare.                            -->
-    <!-- In particolare, viene usato dal motore Flutter nel plugin ProcessTextPlugin      -->
-    <!-- per operazioni come copia, incolla e selezione del testo.                       -->
-    <!-- Riferimenti:                                                                     -->
-    <!--   https://developer.android.com/training/package-visibility                     -->
-    <!--   https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
