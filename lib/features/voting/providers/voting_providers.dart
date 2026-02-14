@@ -50,10 +50,9 @@ final votesProvider = StateNotifierProvider<VotesNotifier,
 
 class VotesNotifier
     extends StateNotifier<Map<String, Map<String, Map<String, double>>>> {
-  final Ref _ref;
   final VoteSyncService _syncService = VoteSyncService();
 
-  VotesNotifier(this._ref) : super({}) {
+  VotesNotifier(Ref ref) : super({}) {
     _init();
   }
 

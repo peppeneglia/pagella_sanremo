@@ -126,7 +126,7 @@ class _CreateGroupPageState extends ConsumerState<CreateGroupPage> {
                         height: 48,
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.blueDark.withOpacity(0.1)
+                              ? AppColors.blueDark.withValues(alpha: 0.1)
                               : Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
