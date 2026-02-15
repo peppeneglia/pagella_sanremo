@@ -27,13 +27,14 @@ class CommunityRankingPage extends ConsumerWidget {
         SizedBox(
           height: 40,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: dates.map((date) {
-              return DateButton(
-                date: date,
-                isSelected: date == selectedDate,
-                onTap: () =>
-                    ref.read(selectedDateProvider.notifier).state = date,
+              return Expanded(
+                child: DateButton(
+                  date: date,
+                  isSelected: date == selectedDate,
+                  onTap: () =>
+                      ref.read(selectedDateProvider.notifier).state = date,
+                ),
               );
             }).toList(),
           ),
@@ -64,7 +65,7 @@ class CommunityRankingPage extends ConsumerWidget {
                       .map((r) => r.totalVoters)
                       .reduce((a, b) => a > b ? a : b);
                   return Text(
-                    '$maxVoters voti',
+                    '$maxVoters ${maxVoters == 1 ? 'voto' : 'voti'}',
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontSize: 12,

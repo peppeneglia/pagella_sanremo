@@ -88,8 +88,13 @@ class _JoinGroupPageState extends ConsumerState<JoinGroupPage> {
                   inputFormatters: [
                     LengthLimitingTextInputFormatter(6),
                   ],
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Es. ABC123',
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 2,
+                    ),
                   ),
                   style: const TextStyle(
                     fontSize: 20,
@@ -167,7 +172,7 @@ class _JoinGroupPageState extends ConsumerState<JoinGroupPage> {
                 const SizedBox(height: 24),
 
                 Text(
-                  'Il codice te lo deve dare chi ha creato il gruppo',
+                  'Richiedi il codice di invito al creatore del gruppo.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.grey.shade600,

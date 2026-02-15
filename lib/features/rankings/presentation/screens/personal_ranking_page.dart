@@ -28,13 +28,14 @@ class _PersonalRankingPageState extends ConsumerState<PersonalRankingPage> {
         SizedBox(
           height: 40,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: dates.map((date) {
-              return DateButton(
-                date: date,
-                isSelected: date == selectedDate,
-                onTap: () =>
-                    ref.read(selectedDateProvider.notifier).state = date,
+              return Expanded(
+                child: DateButton(
+                  date: date,
+                  isSelected: date == selectedDate,
+                  onTap: () =>
+                      ref.read(selectedDateProvider.notifier).state = date,
+                ),
               );
             }).toList(),
           ),

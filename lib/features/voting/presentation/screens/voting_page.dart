@@ -18,15 +18,16 @@ class VotingPage extends ConsumerWidget {
         SizedBox(
           height: 40,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: dates.map((date) {
-              return DateButton(
-                date: date,
-                isSelected: date == selectedDate,
-                onTap: () {
-                  FocusScope.of(context).unfocus();
-                  ref.read(selectedDateProvider.notifier).state = date;
-                },
+              return Expanded(
+                child: DateButton(
+                  date: date,
+                  isSelected: date == selectedDate,
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    ref.read(selectedDateProvider.notifier).state = date;
+                  },
+                ),
               );
             }).toList(),
           ),
@@ -48,11 +49,13 @@ class VotingPage extends ConsumerWidget {
                 ),
               ],
             ),
+            clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: const Row(
                     children: [
                       Expanded(
                         flex: 2,
@@ -124,7 +127,9 @@ class VotingPage extends ConsumerWidget {
                 ),
 
                 Expanded(
-                  child: ListView.builder(
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+                    child: ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: artists.length,
                     itemBuilder: (context, index) {
@@ -138,6 +143,7 @@ class VotingPage extends ConsumerWidget {
                         date: selectedDate,
                       );
                     },
+                  ),
                   ),
                 ),
               ],

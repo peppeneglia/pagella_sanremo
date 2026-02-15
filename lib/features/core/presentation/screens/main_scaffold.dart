@@ -31,6 +31,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     final isLoggedIn = ref.watch(isLoggedInProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -50,6 +51,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
             icon: Icon(
               isLoggedIn ? Icons.account_circle : Icons.account_circle_outlined,
               color: AppColors.blueDark,
+              size: 28,
             ),
             onPressed: () {
               Navigator.push(

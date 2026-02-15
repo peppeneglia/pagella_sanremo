@@ -18,7 +18,7 @@ class DateButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
@@ -27,12 +27,14 @@ class DateButton extends StatelessWidget {
             ),
           ),
         ),
+        alignment: Alignment.center,
         child: Text(
           date,
+          textAlign: TextAlign.center,
           style: TextStyle(
             color: isSelected ? AppColors.blueDark : Colors.grey,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 14,
+            fontSize: 13,
             fontFamily: 'PlusJakartaSans',
           ),
         ),
