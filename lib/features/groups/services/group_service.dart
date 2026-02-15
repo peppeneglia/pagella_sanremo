@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pagella_sanremo/features/groups/models/group.dart';
+import 'package:pagella_sanremo/features/rankings/services/community_ranking_service.dart';
 
 class GroupService {
   SupabaseClient get _client => Supabase.instance.client;
@@ -60,16 +61,18 @@ class GroupService {
     return null;
   }
 
-  Future<Group?> joinGroup(String code) async {
+  Future<({Group? group, bool alreadyMember})> joinGroup(String code) async {
     final userId = _client.auth.currentUser?.id;
-    if (userId == null) return null;
+    if (userId == null) return (group: null, alreadyMember: false);
 
     try {
       final groupResponse = await _client
           .from('groups')
           .select()
           .eq('code', code.toUpperCase())
-          .single();
+          .maybeSingle();
+
+      if (groupResponse == null) return (group: null, alreadyMember: false);
 
       final group = Group.fromMap(groupResponse);
 
@@ -80,17 +83,17 @@ class GroupService {
           .eq('user_id', userId)
           .maybeSingle();
 
-      if (existingMember != null) return group;
+      if (existingMember != null) return (group: group, alreadyMember: true);
 
       await _client.from('group_members').insert({
         'group_id': group.id,
         'user_id': userId,
       });
 
-      return group;
+      return (group: group, alreadyMember: false);
     } catch (e) {
       debugPrint('Errore unione al gruppo: $e');
-      return null;
+      return (group: null, alreadyMember: false);
     }
   }
 
@@ -246,4 +249,136 @@ class GroupService {
       return false;
     }
   }
+
+  /// Voti individuali dei membri del gruppo per un artista specifico.
+  Future<List<MemberArtistVote>> getArtistMemberVotes(
+      String groupId, String artistName, String date) async {
+    try {
+      final membersResponse = await _client
+          .from('group_members')
+          .select('user_id, profiles(username, email)')
+          .eq('group_id', groupId);
+
+      if ((membersResponse as List).isEmpty) return [];
+
+      final userIds =
+          membersResponse.map((m) => m['user_id'] as String).toList();
+      final usernameMap = <String, String>{};
+      for (final m in membersResponse) {
+        final uid = m['user_id'] as String;
+        final profile = m['profiles'] as Map<String, dynamic>?;
+        usernameMap[uid] = profile?['username'] ?? profile?['email'] ?? 'Utente';
+      }
+
+      final votesResponse = await _client
+          .from('votes')
+          .select('user_id, canto, testo, look')
+          .inFilter('user_id', userIds)
+          .eq('artist_name', artistName)
+          .eq('date', date);
+
+      return (votesResponse as List).map((vote) {
+        final uid = vote['user_id'] as String;
+        return MemberArtistVote(
+          username: usernameMap[uid] ?? 'Utente',
+          canto: (vote['canto'] as num?)?.toDouble(),
+          testo: (vote['testo'] as num?)?.toDouble(),
+          look: (vote['look'] as num?)?.toDouble(),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Errore caricamento voti individuali: $e');
+      return [];
+    }
+  }
+
+  /// Classifica artisti calcolata sui voti dei soli membri del gruppo.
+  Future<List<CommunityRanking>> fetchGroupRankings(
+      String groupId, String date) async {
+    try {
+      // 1. Recupera user_id dei membri del gruppo
+      final membersResponse = await _client
+          .from('group_members')
+          .select('user_id')
+          .eq('group_id', groupId);
+
+      final userIds =
+          (membersResponse as List).map((m) => m['user_id'] as String).toList();
+
+      if (userIds.isEmpty) return [];
+
+      // 2. Recupera voti filtrati per membri + data
+      final votesResponse = await _client
+          .from('votes')
+          .select('artist_name, canto, testo, look, user_id')
+          .inFilter('user_id', userIds)
+          .eq('date', date);
+
+      if ((votesResponse as List).isEmpty) return [];
+
+      // 3. Aggregazione lato Dart per artista
+      final artistData = <String, _ArtistAgg>{};
+
+      for (final vote in votesResponse) {
+        final name = vote['artist_name'] as String;
+        final agg = artistData.putIfAbsent(name, () => _ArtistAgg());
+
+        final canto = vote['canto'] as num?;
+        final testo = vote['testo'] as num?;
+        final look = vote['look'] as num?;
+
+        if (canto != null) {
+          agg.cantoSum += canto.toDouble();
+          agg.cantoCount++;
+        }
+        if (testo != null) {
+          agg.testoSum += testo.toDouble();
+          agg.testoCount++;
+        }
+        if (look != null) {
+          agg.lookSum += look.toDouble();
+          agg.lookCount++;
+        }
+        agg.voterIds.add(vote['user_id'] as String);
+      }
+
+      return artistData.entries.map((e) {
+        final agg = e.value;
+        final avgCanto = agg.cantoCount > 0 ? agg.cantoSum / agg.cantoCount : 0.0;
+        final avgTesto = agg.testoCount > 0 ? agg.testoSum / agg.testoCount : 0.0;
+        final avgLook = agg.lookCount > 0 ? agg.lookSum / agg.lookCount : 0.0;
+
+        final totalScores = [
+          if (avgCanto > 0) avgCanto,
+          if (avgTesto > 0) avgTesto,
+          if (avgLook > 0) avgLook,
+        ];
+        final avgTotal =
+            totalScores.isEmpty ? 0.0 : totalScores.reduce((a, b) => a + b) / totalScores.length;
+
+        return CommunityRanking(
+          artistName: e.key,
+          date: date,
+          avgCanto: avgCanto,
+          avgTesto: avgTesto,
+          avgLook: avgLook,
+          avgTotal: avgTotal,
+          totalVoters: agg.voterIds.length,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Errore caricamento classifica gruppo: $e');
+      return [];
+    }
+  }
+}
+
+class _ArtistAgg {
+  double cantoSum = 0;
+  int cantoCount = 0;
+  double testoSum = 0;
+  int testoCount = 0;
+  double lookSum = 0;
+  int lookCount = 0;
+  final Set<String> voterIds = {};
 }

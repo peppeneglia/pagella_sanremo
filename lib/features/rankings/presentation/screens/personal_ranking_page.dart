@@ -246,16 +246,24 @@ class _PersonalRankingPageState extends ConsumerState<PersonalRankingPage> {
         children: [
           SizedBox(
             width: 24,
-            child: Text(
-              position.toString(),
-              style: TextStyle(
-                color:
-                    position <= 3 ? AppColors.blueDark : Colors.grey.shade600,
-                fontWeight: position <= 3 ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 13,
-                fontFamily: 'PlusJakartaSans',
-              ),
-            ),
+            child: position <= 3
+                ? Text(
+                    position == 1
+                        ? '\u{1F947}'
+                        : position == 2
+                            ? '\u{1F948}'
+                            : '\u{1F949}',
+                    style: const TextStyle(fontSize: 16, height: 1),
+                  )
+                : Text(
+                    position.toString(),
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                      fontFamily: 'PlusJakartaSans',
+                    ),
+                  ),
           ),
           Expanded(
             flex: 3,

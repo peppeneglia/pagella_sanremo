@@ -1,25 +1,77 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pagella_sanremo/config/theme/app_theme.dart';
 import 'package:pagella_sanremo/features/auth/providers/auth_providers.dart';
 import 'package:pagella_sanremo/features/voting/providers/voting_providers.dart';
 import 'package:pagella_sanremo/features/rankings/providers/community_ranking_provider.dart';
+import 'package:pagella_sanremo/features/rankings/providers/ranking_provider.dart';
 import 'package:pagella_sanremo/features/rankings/services/community_ranking_service.dart';
 import 'package:pagella_sanremo/features/voting/widgets/date_button.dart';
 
 const _cardShadow = Color(0x26355DBF);
 
-class CommunityRankingPage extends ConsumerWidget {
+class CommunityRankingPage extends ConsumerStatefulWidget {
   const CommunityRankingPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CommunityRankingPage> createState() =>
+      _CommunityRankingPageState();
+}
+
+class _CommunityRankingPageState extends ConsumerState<CommunityRankingPage> {
+  Timer? _autoRefreshTimer;
+  RankingType _selectedType = RankingType.total;
+
+  @override
+  void initState() {
+    super.initState();
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      ref.invalidate(currentCommunityRankingProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  double _scoreForType(CommunityRanking r) {
+    switch (_selectedType) {
+      case RankingType.total:
+        return r.avgTotal;
+      case RankingType.singing:
+        return r.avgCanto;
+      case RankingType.text:
+        return r.avgTesto;
+      case RankingType.look:
+        return r.avgLook;
+      case RankingType.singingAndText:
+        final scores = [
+          if (r.avgCanto > 0) r.avgCanto,
+          if (r.avgTesto > 0) r.avgTesto,
+        ];
+        if (scores.isEmpty) return 0;
+        return scores.reduce((a, b) => a + b) / scores.length;
+    }
+  }
+
+  List<CommunityRanking> _sortedRankings(List<CommunityRanking> rankings) {
+    final filtered = rankings.where((r) => _scoreForType(r) > 0).toList();
+    filtered.sort((a, b) => _scoreForType(b).compareTo(_scoreForType(a)));
+    return filtered;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedDate = ref.watch(selectedDateProvider);
     final isAnonymous = ref.watch(anonymousModeProvider);
     final rankingsAsync = ref.watch(currentCommunityRankingProvider);
 
     if (isAnonymous) {
-      return _buildLoginPrompt(context, ref);
+      return _buildLoginPrompt(context);
     }
 
     return Column(
@@ -40,7 +92,7 @@ class CommunityRankingPage extends ConsumerWidget {
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
 
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -76,11 +128,31 @@ class CommunityRankingPage extends ConsumerWidget {
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
               ),
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () =>
+                    ref.invalidate(currentCommunityRankingProvider),
+                child: Icon(
+                  Icons.refresh,
+                  color: Colors.grey.shade500,
+                  size: 20,
+                ),
+              ),
             ],
           ),
         ),
 
-        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: RankingType.values
+                  .map((type) => _buildTypeButton(type))
+                  .toList(),
+            ),
+          ),
+        ),
 
         Expanded(
           child: Container(
@@ -108,10 +180,10 @@ class CommunityRankingPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      SizedBox(width: 32),
-                      Expanded(
+                      const SizedBox(width: 24),
+                      const Expanded(
                         flex: 3,
                         child: Text(
                           'ARTISTA',
@@ -123,32 +195,15 @@ class CommunityRankingPage extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        width: 50,
-                        child: Text(
-                          'MEDIA',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.blueDark,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            fontFamily: 'PlusJakartaSans',
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: Text(
-                          'VOTI',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.blueDark,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            fontFamily: 'PlusJakartaSans',
-                          ),
-                        ),
-                      ),
+                      if (_selectedType == RankingType.total) ...[
+                        _buildHeaderColumn('CANTO'),
+                        _buildHeaderColumn('TESTO'),
+                        _buildHeaderColumn('LOOK'),
+                      ] else if (_selectedType == RankingType.singingAndText) ...[
+                        _buildHeaderColumn('CANTO'),
+                        _buildHeaderColumn('TESTO'),
+                      ],
+                      _buildHeaderColumn('MEDIA'),
                     ],
                   ),
                 ),
@@ -169,15 +224,17 @@ class CommunityRankingPage extends ConsumerWidget {
                         );
                       }
 
+                      final sorted = _sortedRankings(rankings);
+
                       return RefreshIndicator(
                         onRefresh: () async {
                           ref.invalidate(currentCommunityRankingProvider);
                         },
                         child: ListView.builder(
                           padding: EdgeInsets.zero,
-                          itemCount: rankings.length,
+                          itemCount: sorted.length,
                           itemBuilder: (context, index) {
-                            final ranking = rankings[index];
+                            final ranking = sorted[index];
                             return _buildRankingRow(
                               context,
                               position: index + 1,
@@ -230,6 +287,78 @@ class CommunityRankingPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildTypeButton(RankingType type) {
+    final isSelected = type == _selectedType;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton(
+        onPressed: () => setState(() => _selectedType = type),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isSelected ? AppColors.blueDark : Colors.white,
+          foregroundColor: isSelected ? Colors.white : AppColors.blueDark,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: isSelected ? AppColors.blueDark : Colors.grey.shade300,
+            ),
+          ),
+        ),
+        child: Text(
+          type.label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'PlusJakartaSans',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderColumn(String text) {
+    return SizedBox(
+      width: 50,
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: AppColors.blueDark,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          fontFamily: 'PlusJakartaSans',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScoreBox(double score) {
+    String displayScore = '-';
+    if (score > 0) {
+      displayScore = score.toStringAsFixed(1).replaceAll('.', ',');
+    }
+
+    return Container(
+      width: 50,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.blueDarkLight,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Text(
+        displayScore,
+        style: const TextStyle(
+          color: AppColors.blueDark,
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
+          fontFamily: 'PlusJakartaSans',
+        ),
+      ),
+    );
+  }
+
   Widget _buildRankingRow(
     BuildContext context, {
     required int position,
@@ -250,15 +379,15 @@ class CommunityRankingPage extends ConsumerWidget {
         child: Row(
           children: [
             SizedBox(
-              width: 32,
+              width: 24,
               child: position <= 3
                   ? Text(
                       position == 1
-                          ? '🥇'
+                          ? '\u{1F947}'
                           : position == 2
-                              ? '🥈'
-                              : '🥉',
-                      style: const TextStyle(fontSize: 18),
+                              ? '\u{1F948}'
+                              : '\u{1F949}',
+                      style: const TextStyle(fontSize: 16, height: 1),
                     )
                   : Text(
                       position.toString(),
@@ -272,48 +401,39 @@ class CommunityRankingPage extends ConsumerWidget {
             ),
             Expanded(
               flex: 3,
-              child: Text(
-                ranking.artistName,
-                style: TextStyle(
-                  color: AppColors.blueDark,
-                  fontWeight: position <= 3 ? FontWeight.w700 : FontWeight.w600,
-                  fontSize: 13,
-                  fontFamily: 'PlusJakartaSans',
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ranking.artistName,
+                    style: TextStyle(
+                      color: AppColors.blueDark,
+                      fontWeight:
+                          position <= 3 ? FontWeight.w700 : FontWeight.w600,
+                      fontSize: 13,
+                      fontFamily: 'PlusJakartaSans',
+                    ),
+                  ),
+                  Text(
+                    '${ranking.totalVoters} ${ranking.totalVoters == 1 ? 'voto' : 'voti'}',
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 11,
+                      fontFamily: 'PlusJakartaSans',
+                    ),
+                  ),
+                ],
               ),
             ),
-            Container(
-              width: 50,
-              height: 30,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.blueDarkLight,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Text(
-                ranking.avgTotal > 0
-                    ? ranking.avgTotal.toStringAsFixed(1).replaceAll('.', ',')
-                    : '-',
-                style: const TextStyle(
-                  color: AppColors.blueDark,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  fontFamily: 'PlusJakartaSans',
-                ),
-              ),
-            ),
-            SizedBox(
-              width: 50,
-              child: Text(
-                ranking.totalVoters.toString(),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 12,
-                  fontFamily: 'PlusJakartaSans',
-                ),
-              ),
-            ),
+            if (_selectedType == RankingType.total) ...[
+              _buildScoreBox(ranking.avgCanto),
+              _buildScoreBox(ranking.avgTesto),
+              _buildScoreBox(ranking.avgLook),
+            ] else if (_selectedType == RankingType.singingAndText) ...[
+              _buildScoreBox(ranking.avgCanto),
+              _buildScoreBox(ranking.avgTesto),
+            ],
+            _buildScoreBox(_scoreForType(ranking)),
           ],
         ),
       ),
@@ -338,13 +458,13 @@ class CommunityRankingPage extends ConsumerWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildScoreRow('Canto', ranking.avgCanto),
+            _buildDetailRow('Canto', ranking.avgCanto),
             const SizedBox(height: 8),
-            _buildScoreRow('Testo', ranking.avgTesto),
+            _buildDetailRow('Testo', ranking.avgTesto),
             const SizedBox(height: 8),
-            _buildScoreRow('Look', ranking.avgLook),
+            _buildDetailRow('Look', ranking.avgLook),
             const Divider(height: 24),
-            _buildScoreRow('Media totale', ranking.avgTotal, isTotal: true),
+            _buildDetailRow('Media totale', ranking.avgTotal, isTotal: true),
             const SizedBox(height: 16),
             Text(
               'Votato da ${ranking.totalVoters} utenti',
@@ -372,7 +492,7 @@ class CommunityRankingPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildScoreRow(String label, double score, {bool isTotal = false}) {
+  Widget _buildDetailRow(String label, double score, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -405,7 +525,7 @@ class CommunityRankingPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoginPrompt(BuildContext context, WidgetRef ref) {
+  Widget _buildLoginPrompt(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),

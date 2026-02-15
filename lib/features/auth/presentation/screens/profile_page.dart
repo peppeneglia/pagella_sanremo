@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pagella_sanremo/config/theme/app_theme.dart';
 import 'package:pagella_sanremo/features/auth/providers/auth_providers.dart';
+import 'package:pagella_sanremo/features/auth/presentation/screens/privacy_policy_page.dart';
 
 
 class ProfilePage extends ConsumerWidget {
@@ -125,7 +126,10 @@ class ProfilePage extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () => _confirmLogout(context, ref),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Supabase.instance.client.auth.signOut();
+                    },
                     icon: const Icon(Icons.logout, size: 20),
                     label: const Text('Esci dall\'account'),
                     style: OutlinedButton.styleFrom(
@@ -170,7 +174,34 @@ class ProfilePage extends ConsumerWidget {
                 ),
               ],
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+
+              // Privacy Policy
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PrivacyPolicyPage(),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.shield_outlined,
+                      size: 18, color: Colors.grey.shade600),
+                  label: Text(
+                    'Privacy Policy',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontFamily: 'PlusJakartaSans',
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
 
               // Versione app
               Text(
@@ -222,35 +253,4 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Esci dall\'account'),
-        content: const Text('Sei sicuro di voler uscire?'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annulla'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Esci'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      await Supabase.instance.client.auth.signOut();
-      // auth_wrapper.dart invalida votesProvider al cambio stato auth
-      if (context.mounted) {
-        Navigator.popUntil(context, (route) => route.isFirst);
-      }
-    }
-  }
 }

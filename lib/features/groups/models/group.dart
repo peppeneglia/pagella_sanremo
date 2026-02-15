@@ -75,3 +75,23 @@ class GroupMember {
     );
   }
 }
+
+class MemberArtistVote {
+  final String username;
+  final double? canto;
+  final double? testo;
+  final double? look;
+
+  MemberArtistVote({
+    required this.username,
+    this.canto,
+    this.testo,
+    this.look,
+  });
+
+  double? get average {
+    final scores = [canto, testo, look].whereType<double>().toList();
+    if (scores.isEmpty) return null;
+    return scores.reduce((a, b) => a + b) / scores.length;
+  }
+}

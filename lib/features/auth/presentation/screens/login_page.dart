@@ -44,23 +44,14 @@ class _LoginPageState extends State<LoginPage> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Controlla la tua email per confermare l\'account'),
-              backgroundColor: AppColors.blueDark,
-            ),
-          );
-          Navigator.pop(context);
-        }
       } else {
         await client.auth.signInWithPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-        if (mounted) {
-          Navigator.popUntil(context, (route) => route.isFirst);
-        }
+      }
+      if (mounted) {
+        Navigator.popUntil(context, (route) => route.isFirst);
       }
     } on AuthException catch (e) {
       if (mounted) {
@@ -87,10 +78,7 @@ class _LoginPageState extends State<LoginPage> {
     if (error.contains('Invalid login credentials')) {
       return 'Email o password non corretti';
     }
-    if (error.contains('Email not confirmed')) {
-      return 'Conferma la tua email prima di accedere';
-    }
-    if (error.contains('User already registered')) {
+if (error.contains('User already registered')) {
       return 'Questa email è già registrata';
     }
     if (error.contains('Password should be')) {
