@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,175 +41,299 @@ final artistsForDateProvider =
   }
 });
 
-/// Stato: Map<data, Map<nomeArtista, Map<categoria, punteggio>>>
+/// Account loggato: Supabase e' fonte primaria, cache locale di backup.
+/// Anonimo: solo SharedPreferences.
+///
+/// Al login: cache locale (istantanea) + fetch Supabase + merge.
+/// La cache copre il gap se un upsert era ancora in-flight al logout.
 final votesProvider = StateNotifierProvider<VotesNotifier,
     Map<String, Map<String, Map<String, double>>>>((ref) {
-  return VotesNotifier(ref);
+  final user = Supabase.instance.client.auth.currentUser;
+  return VotesNotifier(userId: user?.id);
 });
 
 class VotesNotifier
     extends StateNotifier<Map<String, Map<String, Map<String, double>>>> {
   final VoteSyncService _syncService = VoteSyncService();
+  final String? _userId;
 
-  VotesNotifier(Ref ref) : super({}) {
+  VotesNotifier({String? userId}) : _userId = userId, super({}) {
     _init();
   }
 
-  static const String _votesKey = 'votes';
-  Timer? _saveTimer;
-  bool _isSaving = false;
-
-  @override
-  void dispose() {
-    _saveTimer?.cancel();
-    super.dispose();
-  }
+  String get _cacheKey => 'votes_${_userId ?? "anonymous"}';
 
   Future<void> _init() async {
-    await _loadLocalVotes();
+    if (_userId != null) {
+      // 1. Carica cache locale (istantaneo, sopravvive a logout rapidi)
+      await _loadCache();
+      final cached = _deepCopy(state);
 
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      await _syncWithSupabase();
-    }
-  }
+      // 2. Fetch da Supabase (fonte primaria)
+      try {
+        final remote = await _syncService.fetchAllVotes(_userId);
+        if (!mounted) return;
 
-  Future<void> _loadLocalVotes() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final votesString = prefs.getString(_votesKey);
+        // 3. Merge: Supabase vince, cache riempie i gap
+        //    (gap = voti salvati in cache ma il cui upsert non era ancora arrivato)
+        final merged = _deepCopy(remote);
+        final toSync = <Map<String, dynamic>>[];
 
-      if (votesString != null) {
-        final Map<String, dynamic> votesMap = jsonDecode(votesString);
-        final newState = <String, Map<String, Map<String, double>>>{};
+        for (final de in cached.entries) {
+          merged[de.key] ??= {};
+          for (final ae in de.value.entries) {
+            merged[de.key]![ae.key] ??= {};
+            bool hasNew = false;
 
-        for (final date in votesMap.keys) {
-          newState[date] = {};
-          final dateVotes = votesMap[date] as Map<String, dynamic>;
+            for (final ce in ae.value.entries) {
+              if (merged[de.key]![ae.key]![ce.key] == null) {
+                merged[de.key]![ae.key]![ce.key] = ce.value;
+                hasNew = true;
+              }
+            }
 
-          for (final artistName in dateVotes.keys) {
-            newState[date]![artistName] = {};
-            final artistVotes = dateVotes[artistName] as Map<String, dynamic>;
-
-            for (final category in artistVotes.keys) {
-              final score = artistVotes[category] as num;
-              newState[date]![artistName]![category] = score.toDouble();
+            if (hasNew) {
+              final s = merged[de.key]![ae.key]!;
+              toSync.add({
+                'user_id': _userId,
+                'artist_name': ae.key,
+                'date': de.key,
+                'canto': _validScore(s['CANTO']),
+                'testo': _validScore(s['TESTO']),
+                'look': _validScore(s['LOOK']),
+                'updated_at': DateTime.now().toIso8601String(),
+              });
             }
           }
         }
 
-        state = newState;
-        debugPrint('Voti locali caricati');
-      }
-    } catch (e) {
-      debugPrint('Errore nel caricamento dei voti locali: $e');
-    }
-  }
+        state = merged;
 
-  /// Merge dei voti remoti con quelli locali (priorita' ai remoti).
-  /// Se non ci sono voti remoti ma esistono locali, li carica su Supabase.
-  Future<void> _syncWithSupabase() async {
-    try {
-      final remoteVotes = await _syncService.fetchAllVotes();
-
-      if (remoteVotes.isNotEmpty) {
-        final mergedVotes =
-            Map<String, Map<String, Map<String, double>>>.from(state);
-
-        for (final dateEntry in remoteVotes.entries) {
-          mergedVotes[dateEntry.key] ??= {};
-          for (final artistEntry in dateEntry.value.entries) {
-            mergedVotes[dateEntry.key]![artistEntry.key] = artistEntry.value;
-          }
+        if (toSync.isNotEmpty) {
+          _syncService.batchUpsert(toSync);
+          debugPrint('Push ${toSync.length} voti dalla cache a Supabase');
         }
 
-        state = mergedVotes;
-        await _saveLocalVotes();
-        debugPrint('Voti sincronizzati da Supabase');
-      } else if (state.isNotEmpty) {
-        await _syncService.syncLocalVotes(state);
-        debugPrint('Voti locali caricati su Supabase');
+        debugPrint('Voti caricati: ${remote.length} da Supabase'
+            '${toSync.isNotEmpty ? " + ${toSync.length} dalla cache" : ""}');
+      } catch (e) {
+        debugPrint('Supabase non raggiungibile, uso cache: $e');
+        // state gia' caricato dalla cache al punto 1
       }
-    } catch (e) {
-      debugPrint('Errore sync Supabase: $e');
+
+      // 4. Migra eventuali voti anonimi nell'account
+      await _migrateAnonymousVotes();
+      _saveCache();
+    } else {
+      // Anonimo: solo SharedPreferences
+      await _loadCache();
     }
   }
 
-  Future<void> _saveLocalVotes() async {
-    if (_isSaving) return;
-    _isSaving = true;
+  // -- Cache locale (salvataggio immediato, no debounce) --
 
+  Future<void> _loadCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final votesString = jsonEncode(state);
-      await prefs.setString(_votesKey, votesString);
+      var data = prefs.getString(_cacheKey);
+
+      // Migrazione una tantum dalla vecchia chiave 'votes'
+      if (data == null && _userId != null) {
+        data = prefs.getString('votes');
+        if (data != null) {
+          await prefs.setString(_cacheKey, data);
+          await prefs.remove('votes');
+        }
+      }
+
+      if (data != null && mounted) {
+        state = _parseJson(data);
+      }
     } catch (e) {
-      debugPrint('Errore nel salvataggio locale: $e');
-    } finally {
-      _isSaving = false;
+      debugPrint('Errore caricamento cache: $e');
     }
   }
 
-  void _debouncedSave() {
-    _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(milliseconds: 500), () {
-      _saveLocalVotes();
+  /// Salva cache immediatamente. Fire-and-forget, SharedPreferences
+  /// aggiorna la cache in-memoria in modo sincrono quindi e' subito
+  /// disponibile anche se il write su disco e' ancora in corso.
+  void _saveCache() {
+    final snapshot = jsonEncode(state);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString(_cacheKey, snapshot);
     });
   }
 
+  // -- Migrazione anonimo -> account --
+
+  Future<void> _migrateAnonymousVotes() async {
+    if (_userId == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final anonData = prefs.getString('votes_anonymous');
+    if (anonData == null) return;
+
+    try {
+      final anonVotes = _parseJson(anonData);
+      if (anonVotes.isEmpty) {
+        await prefs.remove('votes_anonymous');
+        return;
+      }
+
+      final merged = _deepCopy(state);
+      final rowsToSync = <Map<String, dynamic>>[];
+
+      for (final de in anonVotes.entries) {
+        merged[de.key] ??= {};
+        for (final ae in de.value.entries) {
+          merged[de.key]![ae.key] ??= {};
+          bool added = false;
+
+          for (final ce in ae.value.entries) {
+            if (merged[de.key]![ae.key]![ce.key] == null) {
+              merged[de.key]![ae.key]![ce.key] = ce.value;
+              added = true;
+            }
+          }
+
+          if (added) {
+            final s = merged[de.key]![ae.key]!;
+            rowsToSync.add({
+              'user_id': _userId,
+              'artist_name': ae.key,
+              'date': de.key,
+              'canto': _validScore(s['CANTO']),
+              'testo': _validScore(s['TESTO']),
+              'look': _validScore(s['LOOK']),
+              'updated_at': DateTime.now().toIso8601String(),
+            });
+          }
+        }
+      }
+
+      if (!mounted) return;
+
+      if (rowsToSync.isNotEmpty) {
+        state = merged;
+        try {
+          await _syncService.batchUpsert(rowsToSync);
+          await prefs.remove('votes_anonymous');
+          debugPrint('Migrati ${rowsToSync.length} voti anonimi -> account');
+        } catch (e) {
+          debugPrint('Push anonimi fallito, riprovo al prossimo login: $e');
+          // NON cancello votes_anonymous: riprovo al prossimo login
+        }
+      } else {
+        await prefs.remove('votes_anonymous');
+      }
+    } catch (e) {
+      debugPrint('Errore migrazione anonimi: $e');
+    }
+  }
+
+  // -- Operazioni sui voti --
+
   Future<void> updateVote(
       String date, String artistName, String category, double score) async {
-    final newState = Map<String, Map<String, Map<String, double>>>.from(state);
-    newState[date] ??= {};
-    newState[date]![artistName] ??= {};
-    newState[date]![artistName]![category] = score;
-    state = newState;
+    final s = _deepCopy(state);
+    s[date] ??= {};
+    s[date]![artistName] ??= {};
+    s[date]![artistName]![category] = score;
+    state = s;
 
-    _debouncedSave();
+    // Cache immediata: sopravvive anche a logout istantaneo
+    _saveCache();
 
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      final artistScores = newState[date]![artistName]!;
-      await _syncService.upsertVote(
+    if (_userId != null) {
+      final scores = s[date]![artistName]!;
+      _syncService.upsertVote(
+        userId: _userId,
         artistName: artistName,
         date: date,
-        canto: artistScores['CANTO']?.toInt(),
-        testo: artistScores['TESTO']?.toInt(),
-        look: artistScores['LOOK']?.toInt(),
+        canto: _validScore(scores['CANTO']),
+        testo: _validScore(scores['TESTO']),
+        look: _validScore(scores['LOOK']),
       );
     }
   }
 
   Future<void> removeVote(
       String date, String artistName, String category) async {
-    final newState = Map<String, Map<String, Map<String, double>>>.from(state);
-    newState[date] ??= {};
-    newState[date]![artistName]?.remove(category);
+    final s = _deepCopy(state);
+    s[date]?[artistName]?.remove(category);
 
-    if (newState[date]![artistName]?.isEmpty ?? false) {
-      newState[date]!.remove(artistName);
+    if (s[date]?[artistName]?.isEmpty ?? false) {
+      s[date]!.remove(artistName);
+    }
+    if (s[date]?.isEmpty ?? false) {
+      s.remove(date);
     }
 
-    if (newState[date]?.isEmpty ?? false) {
-      newState.remove(date);
+    state = s;
+    _saveCache();
+
+    if (_userId != null) {
+      final remaining = s[date]?[artistName] ?? {};
+      _syncService.upsertVote(
+        userId: _userId,
+        artistName: artistName,
+        date: date,
+        canto: _validScore(remaining['CANTO']),
+        testo: _validScore(remaining['TESTO']),
+        look: _validScore(remaining['LOOK']),
+      );
     }
-
-    state = newState;
-    _debouncedSave();
   }
 
-  Map<String, Map<String, double>> getVotesForDate(String date) {
-    return state[date] ?? {};
-  }
+  Map<String, Map<String, double>> getVotesForDate(String date) =>
+      state[date] ?? {};
 
-  Map<String, double>? getArtistVotes(String date, String artistName) {
-    return state[date]?[artistName];
-  }
+  Map<String, double>? getArtistVotes(String date, String artistName) =>
+      state[date]?[artistName];
 
   Future<void> forceSync() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      await _syncWithSupabase();
+    if (_userId != null) {
+      try {
+        final remote = await _syncService.fetchAllVotes(_userId);
+        if (!mounted) return;
+        state = remote;
+        _saveCache();
+      } catch (e) {
+        debugPrint('Errore forceSync: $e');
+      }
     }
+  }
+
+  // -- Helpers --
+
+  num? _validScore(double? v) {
+    if (v == null) return null;
+    if (v < 1 || v > 10) return null;
+    final remainder = v % 1;
+    if (remainder != 0.0 && remainder != 0.5) return null;
+    return v == v.roundToDouble() ? v.toInt() : v;
+  }
+
+  Map<String, Map<String, Map<String, double>>> _deepCopy(
+      Map<String, Map<String, Map<String, double>>> src) {
+    return src.map((k, v) => MapEntry(
+        k, v.map((k2, v2) => MapEntry(k2, Map<String, double>.from(v2)))));
+  }
+
+  Map<String, Map<String, Map<String, double>>> _parseJson(String raw) {
+    final Map<String, dynamic> json = jsonDecode(raw);
+    final result = <String, Map<String, Map<String, double>>>{};
+    for (final d in json.keys) {
+      result[d] = {};
+      final dateMap = json[d] as Map<String, dynamic>;
+      for (final a in dateMap.keys) {
+        result[d]![a] = {};
+        final artistMap = dateMap[a] as Map<String, dynamic>;
+        for (final c in artistMap.keys) {
+          result[d]![a]![c] = (artistMap[c] as num).toDouble();
+        }
+      }
+    }
+    return result;
   }
 }

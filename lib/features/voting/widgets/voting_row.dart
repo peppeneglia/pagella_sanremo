@@ -33,6 +33,7 @@ class _VotingRowState extends ConsumerState<VotingRow> {
   final _controllers = <String, TextEditingController>{};
   final _scores = <String, double?>{};
   static const _categories = ['CANTO', 'TESTO', 'LOOK'];
+  bool _syncing = false;
 
   @override
   void initState() {
@@ -55,13 +56,31 @@ class _VotingRowState extends ConsumerState<VotingRow> {
 
   void _loadVotes() {
     final votes = ref.read(votesProvider);
+    _syncScores(votes);
+  }
+
+  /// Sincronizza i controller/scores locali con lo stato del provider.
+  /// Il flag _syncing evita che il set di controller.text triggheri
+  /// onChanged → updateVote → loop infinito.
+  void _syncScores(Map<String, Map<String, Map<String, double>>> votes) {
     final artistVotes = votes[widget.date]?[widget.artistName] ?? {};
 
+    _syncing = true;
+    bool changed = false;
     for (final cat in _categories) {
       final score = artistVotes[cat];
-      _controllers[cat]!.text = score != null ? score.round().toString() : '';
-      _scores[cat] = score;
+      if (_scores[cat] != score) {
+        _scores[cat] = score;
+        changed = true;
+        final newText = score != null ? _scoreToText(score) : '';
+        if (_controllers[cat]!.text != newText) {
+          _controllers[cat]!.text = newText;
+        }
+      }
     }
+    _syncing = false;
+
+    if (changed) setState(() {});
   }
 
   @override
@@ -74,6 +93,9 @@ class _VotingRowState extends ConsumerState<VotingRow> {
 
   @override
   Widget build(BuildContext context) {
+    // Ascolta i cambiamenti del provider (es. caricamento asincrono da cache/Supabase)
+    ref.listen(votesProvider, (_, next) => _syncScores(next));
+
     final isCoverNight = widget.date == 'VEN 27';
 
     return Padding(
@@ -155,6 +177,13 @@ class _VotingRowState extends ConsumerState<VotingRow> {
     );
   }
 
+  /// 7.0 → "7", 7.5 → "7.5"
+  String _scoreToText(double score) {
+    return score == score.roundToDouble()
+        ? score.toInt().toString()
+        : score.toStringAsFixed(1);
+  }
+
   String _calculateTotal() {
     final validScores = _scores.values.whereType<double>().toList();
     if (validScores.isEmpty) return '-';
@@ -177,19 +206,40 @@ class _VotingRowState extends ConsumerState<VotingRow> {
           border: Border.all(color: _blueLightBorder),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Center(
-          child: IntrinsicWidth(
-            child: TextFormField(
+        child: TextFormField(
               controller: _controllers[category],
               textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(2),
+                FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                LengthLimitingTextInputFormatter(4),
                 TextInputFormatter.withFunction((oldValue, newValue) {
                   if (newValue.text.isEmpty) return newValue;
-                  final value = int.tryParse(newValue.text);
-                  if (value == null || value > 10) return oldValue;
+                  final text = newValue.text.replaceAll(',', '.');
+
+                  // Stato intermedio "X." (l'utente sta per scrivere .5)
+                  if (text.endsWith('.')) {
+                    if (text.indexOf('.') != text.lastIndexOf('.')) {
+                      return oldValue;
+                    }
+                    final prefix =
+                        text.substring(0, text.length - 1);
+                    final n = int.tryParse(prefix);
+                    if (n == null || n < 1 || n > 9) return oldValue;
+                    return newValue;
+                  }
+
+                  final value = double.tryParse(text);
+                  if (value == null || value < 1 || value > 10) {
+                    return oldValue;
+                  }
+
+                  // Solo interi o .5
+                  final remainder = value % 1;
+                  if (remainder != 0.0 && remainder != 0.5) {
+                    return oldValue;
+                  }
+
                   return newValue;
                 }),
               ],
@@ -199,18 +249,18 @@ class _VotingRowState extends ConsumerState<VotingRow> {
                 fontFamily: 'PlusJakartaSans',
                 height: 1.0,
               ),
-              // Bordi gestiti dal Container esterno
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 errorBorder: InputBorder.none,
                 disabledBorder: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
                 isDense: true,
-                isCollapsed: true,
               ),
               onChanged: (value) {
+                if (_syncing) return;
+
                 if (value.isEmpty) {
                   HapticFeedback.lightImpact();
                   setState(() => _scores[category] = null);
@@ -221,21 +271,22 @@ class _VotingRowState extends ConsumerState<VotingRow> {
                       );
                   return;
                 }
-                final score = int.tryParse(value);
+                final parsed = value.replaceAll(',', '.');
+                // Ignora stato intermedio "X." (utente sta digitando .5)
+                if (parsed.endsWith('.')) return;
+                final score = double.tryParse(parsed);
                 if (score != null) {
                   HapticFeedback.selectionClick();
-                  setState(() => _scores[category] = score.toDouble());
+                  setState(() => _scores[category] = score);
                   ref.read(votesProvider.notifier).updateVote(
                         widget.date,
                         widget.artistName,
                         category,
-                        score.toDouble(),
+                        score,
                       );
                 }
               },
             ),
-          ),
-        ),
       ),
     );
   }
