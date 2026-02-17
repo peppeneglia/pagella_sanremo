@@ -1,16 +1,99 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pagella_sanremo/config/theme/app_theme.dart';
 import 'package:pagella_sanremo/features/auth/providers/auth_providers.dart';
 import 'package:pagella_sanremo/features/auth/presentation/screens/privacy_policy_page.dart';
 
 
-class ProfilePage extends ConsumerWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends ConsumerState<ProfilePage> {
+  bool _isDeleting = false;
+
+  Future<void> _deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Elimina account',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+            color: AppColors.blueDark,
+          ),
+        ),
+        content: const Text(
+          'Tutti i tuoi dati (voti, gruppi, profilo) verranno eliminati definitivamente. Questa azione non può essere annullata.\n\nPotrai registrarti di nuovo in futuro.',
+          style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Annulla',
+                style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    color: Colors.grey.shade600)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Elimina',
+                style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontWeight: FontWeight.w700,
+                    color: Colors.red.shade600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Cancella tutti i dati + utente auth tramite funzione RPC server-side
+      await client.rpc('delete_user_account');
+
+      // Pulisci cache locale
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('votes_$userId');
+
+      if (!mounted) return;
+
+      Navigator.popUntil(context, (route) => route.isFirst);
+      await client.auth.signOut();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account eliminato con successo')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Errore eliminazione account: $e');
+      if (mounted) {
+        setState(() => _isDeleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Errore: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isLoggedIn = ref.watch(isLoggedInProvider);
     final user = Supabase.instance.client.auth.currentUser;
 
@@ -138,6 +221,28 @@ class ProfilePage extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: _isDeleting ? null : _deleteAccount,
+                    icon: _isDeleting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(Icons.delete_forever, size: 18, color: Colors.red.shade300),
+                    label: Text(
+                      _isDeleting ? 'Eliminazione...' : 'Elimina account',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontFamily: 'PlusJakartaSans',
+                        color: Colors.red.shade300,
                       ),
                     ),
                   ),

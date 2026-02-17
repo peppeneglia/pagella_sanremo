@@ -4,6 +4,7 @@ import 'package:pagella_sanremo/features/auth/providers/auth_providers.dart';
 import 'package:pagella_sanremo/features/core/presentation/screens/main_scaffold.dart';
 import 'package:pagella_sanremo/features/auth/presentation/screens/welcome_page.dart';
 import 'package:pagella_sanremo/features/voting/providers/voting_providers.dart';
+import 'package:pagella_sanremo/features/groups/providers/groups_provider.dart';
 
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
@@ -13,10 +14,11 @@ class AuthWrapper extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final isAnonymous = ref.watch(anonymousModeProvider);
 
-    // Quando cambia lo stato auth, ricrea il provider dei voti
-    // cosi' usa la chiave SharedPreferences corretta per l'utente
+    // Quando cambia lo stato auth, resetta tutti i provider utente
     ref.listen(authStateProvider, (prev, next) {
       ref.invalidate(votesProvider);
+      ref.invalidate(myGroupsProvider);
+      ref.invalidate(selectedGroupIdProvider);
     });
 
     if (isAnonymous) {

@@ -11,13 +11,18 @@ class WelcomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(height: constraints.maxHeight * 0.12),
 
-              const Text(
+                    const Text(
                 '🎵',
                 style: TextStyle(fontSize: 64),
               ),
@@ -43,7 +48,7 @@ class WelcomePage extends ConsumerWidget {
                 ),
               ),
 
-              const Spacer(flex: 2),
+              SizedBox(height: constraints.maxHeight * 0.08),
 
               SizedBox(
                 width: double.infinity,
@@ -142,8 +147,11 @@ class WelcomePage extends ConsumerWidget {
                 ),
               ),
 
-              const Spacer(),
-            ],
+              const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
