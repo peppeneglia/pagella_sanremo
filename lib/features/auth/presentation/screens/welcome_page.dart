@@ -22,10 +22,11 @@ class WelcomePage extends ConsumerWidget {
                   children: [
                     SizedBox(height: constraints.maxHeight * 0.12),
 
-                    const Text(
-                '🎵',
-                style: TextStyle(fontSize: 64),
-              ),
+                    Image.asset(
+                      'assets/images/logo-pagellasanremo.png',
+                      width: 100,
+                      height: 100,
+                    ),
               const SizedBox(height: 16),
               const Text(
                 'PAGELLA SANREMO',

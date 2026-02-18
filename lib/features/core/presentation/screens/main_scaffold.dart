@@ -36,15 +36,29 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        title: const Text(
-          'PAGELLA SANREMO',
-          style: TextStyle(
-            color: AppColors.blueDark,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            fontStyle: FontStyle.italic,
-            fontFamily: 'PlusJakartaSans',
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/logo-pagellasanremo.png',
+              width: 32,
+              height: 32,
+            ),
+            const SizedBox(width: 10),
+            const Flexible(
+              child: Text(
+                'PAGELLA SANREMO',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppColors.blueDark,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  fontStyle: FontStyle.italic,
+                  fontFamily: 'PlusJakartaSans',
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
