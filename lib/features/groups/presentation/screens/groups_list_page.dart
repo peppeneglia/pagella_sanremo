@@ -144,7 +144,8 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              const Icon(Icons.leaderboard, color: AppColors.blueDark, size: 20),
+              const Icon(Icons.leaderboard,
+                  color: AppColors.blueDark, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
@@ -472,8 +473,7 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
                           ),
                         );
                       },
-                      icon:
-                          const Icon(Icons.copy, color: AppColors.blueDark),
+                      icon: const Icon(Icons.copy, color: AppColors.blueDark),
                       tooltip: 'Copia codice',
                     ),
                   ],
@@ -504,8 +504,7 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
 
               // Join group
               ListTile(
-                leading:
-                    const Icon(Icons.link, color: AppColors.blueDark),
+                leading: const Icon(Icons.link, color: AppColors.blueDark),
                 title: const Text(
                   'Unisciti con codice',
                   style: TextStyle(
@@ -524,8 +523,7 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
 
               // Leave group
               ListTile(
-                leading:
-                    const Icon(Icons.exit_to_app, color: Colors.orange),
+                leading: const Icon(Icons.exit_to_app, color: Colors.orange),
                 title: const Text(
                   'Lascia gruppo',
                   style: TextStyle(
@@ -539,11 +537,9 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
                   final confirm = await _showLeaveDialog(context);
                   if (confirm == true) {
                     final service = ref.read(groupServiceProvider);
-                    final success =
-                        await service.leaveGroup(currentGroup.id);
+                    final success = await service.leaveGroup(currentGroup.id);
                     if (success) {
-                      ref.read(selectedGroupIdProvider.notifier).state =
-                          null;
+                      ref.read(selectedGroupIdProvider.notifier).state = null;
                       ref.invalidate(myGroupsProvider);
                     }
                   }
@@ -553,8 +549,7 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
               // Delete group (owner only)
               if (isOwner)
                 ListTile(
-                  leading:
-                      const Icon(Icons.delete, color: Colors.red),
+                  leading: const Icon(Icons.delete, color: Colors.red),
                   title: const Text(
                     'Elimina gruppo',
                     style: TextStyle(
@@ -565,15 +560,13 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
                   ),
                   onTap: () async {
                     Navigator.pop(ctx);
-                    final confirm =
-                        await _showDeleteDialog(context);
+                    final confirm = await _showDeleteDialog(context);
                     if (confirm == true) {
                       final service = ref.read(groupServiceProvider);
                       final success =
                           await service.deleteGroup(currentGroup.id);
                       if (success) {
-                        ref.read(selectedGroupIdProvider.notifier).state =
-                            null;
+                        ref.read(selectedGroupIdProvider.notifier).state = null;
                         ref.invalidate(myGroupsProvider);
                       }
                     }
@@ -648,10 +641,26 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
     bool isLoading = false;
 
     const emojis = [
-      '\u{1F465}', '\u{1F3E0}', '\u{1F355}', '\u{1F4BC}', '\u{1F3B5}',
-      '\u26BD', '\u{1F3AE}', '\u2764\uFE0F', '\u{1F31F}', '\u{1F389}',
-      '\u{1F3B8}', '\u{1F3A4}', '\u{1F3AF}', '\u{1F3C6}', '\u{1F525}',
-      '\u2728', '\u{1F3B6}', '\u{1F3A7}', '\u{1F3B9}', '\u{1F3AC}',
+      '\u{1F465}',
+      '\u{1F3E0}',
+      '\u{1F355}',
+      '\u{1F4BC}',
+      '\u{1F3B5}',
+      '\u26BD',
+      '\u{1F3AE}',
+      '\u2764\uFE0F',
+      '\u{1F31F}',
+      '\u{1F389}',
+      '\u{1F3B8}',
+      '\u{1F3A4}',
+      '\u{1F3AF}',
+      '\u{1F3C6}',
+      '\u{1F525}',
+      '\u2728',
+      '\u{1F3B6}',
+      '\u{1F3A7}',
+      '\u{1F3B9}',
+      '\u{1F3AC}',
     ];
 
     showDialog(
@@ -731,8 +740,8 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
                             ),
                           ),
                           child: Center(
-                            child:
-                                Text(emoji, style: const TextStyle(fontSize: 20)),
+                            child: Text(emoji,
+                                style: const TextStyle(fontSize: 20)),
                           ),
                         ),
                       );
@@ -910,15 +919,14 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
                         errorMessage = null;
                       });
                       final service = ref.read(groupServiceProvider);
-                      final result = await service
-                          .joinGroup(codeController.text.trim());
+                      final result =
+                          await service.joinGroup(codeController.text.trim());
                       if (!ctx.mounted) return;
                       if (result.group != null) {
                         if (result.alreadyMember) {
                           setDialogState(() {
                             isLoading = false;
-                            errorMessage =
-                                'Fai già parte di questo gruppo';
+                            errorMessage = 'Fai già parte di questo gruppo';
                           });
                         } else {
                           Navigator.pop(ctx);
@@ -927,8 +935,8 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
                               result.group!.id;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content:
-                                  Text('Unito al gruppo "${result.group!.name}"!'),
+                              content: Text(
+                                  'Unito al gruppo "${result.group!.name}"!'),
                               backgroundColor: AppColors.blueDark,
                             ),
                           );
@@ -1315,9 +1323,7 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
             ),
             child: Center(
               child: Text(
-                vote.username.isNotEmpty
-                    ? vote.username[0].toUpperCase()
-                    : '?',
+                vote.username.isNotEmpty ? vote.username[0].toUpperCase() : '?',
                 style: const TextStyle(
                   color: AppColors.blueDark,
                   fontWeight: FontWeight.w700,
@@ -1371,9 +1377,8 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
   }
 
   Widget _buildMiniScore(String label, double? score) {
-    final text = score != null
-        ? score.toStringAsFixed(1).replaceAll('.', ',')
-        : '-';
+    final text =
+        score != null ? score.toStringAsFixed(1).replaceAll('.', ',') : '-';
     return Column(
       children: [
         Text(

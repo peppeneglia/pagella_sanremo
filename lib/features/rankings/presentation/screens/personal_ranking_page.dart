@@ -40,7 +40,6 @@ class _PersonalRankingPageState extends ConsumerState<PersonalRankingPage> {
             }).toList(),
           ),
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: SingleChildScrollView(
@@ -52,7 +51,6 @@ class _PersonalRankingPageState extends ConsumerState<PersonalRankingPage> {
             ),
           ),
         ),
-
         Expanded(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -109,7 +107,6 @@ class _PersonalRankingPageState extends ConsumerState<PersonalRankingPage> {
                     ],
                   ),
                 ),
-
                 Expanded(
                   child: rankedArtists.isEmpty
                       ? const Center(

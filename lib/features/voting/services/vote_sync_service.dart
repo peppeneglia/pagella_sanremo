@@ -8,8 +8,7 @@ class VoteSyncService {
   /// Lancia eccezione in caso di errore (il chiamante gestisce il fallback).
   Future<Map<String, Map<String, Map<String, double>>>> fetchAllVotes(
       String userId) async {
-    final response =
-        await _client.from('votes').select().eq('user_id', userId);
+    final response = await _client.from('votes').select().eq('user_id', userId);
 
     final Map<String, Map<String, Map<String, double>>> votes = {};
 
@@ -21,16 +20,13 @@ class VoteSyncService {
       votes[date]![artistName] = {};
 
       if (row['canto'] != null) {
-        votes[date]![artistName]!['CANTO'] =
-            (row['canto'] as num).toDouble();
+        votes[date]![artistName]!['CANTO'] = (row['canto'] as num).toDouble();
       }
       if (row['testo'] != null) {
-        votes[date]![artistName]!['TESTO'] =
-            (row['testo'] as num).toDouble();
+        votes[date]![artistName]!['TESTO'] = (row['testo'] as num).toDouble();
       }
       if (row['look'] != null) {
-        votes[date]![artistName]!['LOOK'] =
-            (row['look'] as num).toDouble();
+        votes[date]![artistName]!['LOOK'] = (row['look'] as num).toDouble();
       }
     }
 

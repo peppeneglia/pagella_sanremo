@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Medie aggregate di un artista in una serata (community o gruppo).
 class CommunityRanking {
   final String artistName;
   final String date;
@@ -36,6 +37,7 @@ class CommunityRanking {
 class CommunityRankingService {
   SupabaseClient get _client => Supabase.instance.client;
 
+  /// Classifica community di una serata, letta dalla vista `community_rankings`.
   Future<List<CommunityRanking>> fetchRankings(String date) async {
     try {
       final response = await _client
@@ -45,23 +47,10 @@ class CommunityRankingService {
           .order('avg_total', ascending: false);
 
       return (response as List)
-          .map((row) => CommunityRanking.fromMap(row))
+          .map((row) => CommunityRanking.fromMap(row as Map<String, dynamic>))
           .toList();
     } catch (e) {
       debugPrint('Errore caricamento classifica community: $e');
-      return [];
-    }
-  }
-
-  Future<List<CommunityRanking>> fetchOverallRankings() async {
-    try {
-      final response = await _client.rpc('get_overall_community_rankings');
-
-      return (response as List)
-          .map((row) => CommunityRanking.fromMap(row))
-          .toList();
-    } catch (e) {
-      debugPrint('Errore caricamento classifica generale: $e');
       return [];
     }
   }

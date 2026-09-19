@@ -28,6 +28,8 @@ class _CommunityRankingPageState extends ConsumerState<CommunityRankingPage> {
   void initState() {
     super.initState();
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      // In modalità anonima la classifica non è visibile: niente refresh.
+      if (ref.read(anonymousModeProvider)) return;
       ref.invalidate(currentCommunityRankingProvider);
     });
   }
@@ -91,9 +93,7 @@ class _CommunityRankingPageState extends ConsumerState<CommunityRankingPage> {
             }).toList(),
           ),
         ),
-
         const SizedBox(height: 8),
-
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
@@ -130,8 +130,7 @@ class _CommunityRankingPageState extends ConsumerState<CommunityRankingPage> {
               ),
               const SizedBox(width: 4),
               GestureDetector(
-                onTap: () =>
-                    ref.invalidate(currentCommunityRankingProvider),
+                onTap: () => ref.invalidate(currentCommunityRankingProvider),
                 child: Icon(
                   Icons.refresh,
                   color: Colors.grey.shade500,
@@ -141,7 +140,6 @@ class _CommunityRankingPageState extends ConsumerState<CommunityRankingPage> {
             ],
           ),
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: SingleChildScrollView(
@@ -153,7 +151,6 @@ class _CommunityRankingPageState extends ConsumerState<CommunityRankingPage> {
             ),
           ),
         ),
-
         Expanded(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -199,7 +196,8 @@ class _CommunityRankingPageState extends ConsumerState<CommunityRankingPage> {
                         _buildHeaderColumn('CANTO'),
                         _buildHeaderColumn('TESTO'),
                         _buildHeaderColumn('LOOK'),
-                      ] else if (_selectedType == RankingType.singingAndText) ...[
+                      ] else if (_selectedType ==
+                          RankingType.singingAndText) ...[
                         _buildHeaderColumn('CANTO'),
                         _buildHeaderColumn('TESTO'),
                       ],
@@ -207,7 +205,6 @@ class _CommunityRankingPageState extends ConsumerState<CommunityRankingPage> {
                     ],
                   ),
                 ),
-
                 Expanded(
                   child: rankingsAsync.when(
                     data: (rankings) {

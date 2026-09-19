@@ -1,6 +1,10 @@
+# Regole di analisi statica del progetto.
+# Parte dal set consigliato da Flutter e aggiunge alcune regole di coerenza.
+# Elenco completo: https://dart.dev/lints
 include: package:flutter_lints/flutter.yaml
 
 linter:
   rules:
-    # avoid_print: false
-    # prefer_single_quotes: true
+    always_use_package_imports: true
+    prefer_single_quotes: true
+    unawaited_futures: true

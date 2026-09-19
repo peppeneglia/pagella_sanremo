@@ -1,12 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pagella_sanremo/config/theme/app_theme.dart';
+import 'package:pagella_sanremo/features/auth/presentation/screens/privacy_policy_page.dart';
+import 'package:pagella_sanremo/features/auth/providers/auth_providers.dart';
+import 'package:pagella_sanremo/features/core/providers/app_info_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:pagella_sanremo/config/theme/app_theme.dart';
-import 'package:pagella_sanremo/features/auth/providers/auth_providers.dart';
-import 'package:pagella_sanremo/features/auth/presentation/screens/privacy_policy_page.dart';
-
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -17,6 +16,11 @@ class ProfilePage extends ConsumerStatefulWidget {
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isDeleting = false;
+
+  Future<void> _signOut() async {
+    Navigator.of(context).pop();
+    await Supabase.instance.client.auth.signOut();
+  }
 
   Future<void> _deleteAccount() async {
     final confirmed = await showDialog<bool>(
@@ -57,6 +61,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     if (confirmed != true || !mounted) return;
 
+    // Catturati prima del pop: il messenger della MaterialApp sopravvive
+    // alla chiusura di questa pagina, il context di questo widget no.
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
     setState(() => _isDeleting = true);
 
     try {
@@ -71,22 +80,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('votes_$userId');
 
-      if (!mounted) return;
-
-      Navigator.popUntil(context, (route) => route.isFirst);
+      navigator.popUntil((route) => route.isFirst);
       await client.auth.signOut();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account eliminato con successo')),
-        );
-      }
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Account eliminato con successo')),
+      );
     } catch (e) {
       debugPrint('Errore eliminazione account: $e');
       if (mounted) {
         setState(() => _isDeleting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Errore: $e')),
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Errore durante l\'eliminazione. Riprova.'),
+          ),
         );
       }
     }
@@ -95,14 +102,21 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = ref.watch(isLoggedInProvider);
+    final packageInfo = ref.watch(packageInfoProvider);
     final user = Supabase.instance.client.auth.currentUser;
 
-    final displayName = user?.userMetadata?['full_name'] as String?
-        ?? user?.userMetadata?['name'] as String?
-        ?? user?.email?.split('@').first
-        ?? 'Anonimo';
+    final displayName = user?.userMetadata?['full_name'] as String? ??
+        user?.userMetadata?['name'] as String? ??
+        user?.email?.split('@').first ??
+        'Anonimo';
+    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
 
     final email = user?.email;
+
+    final versionLabel = packageInfo.whenOrNull(
+          data: (info) => 'Pagella Sanremo v${info.version}',
+        ) ??
+        'Pagella Sanremo';
 
     return Scaffold(
       appBar: AppBar(
@@ -123,7 +137,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 radius: 48,
                 backgroundColor: AppColors.blueDarkLight,
                 child: Text(
-                  isLoggedIn ? displayName[0].toUpperCase() : '?',
+                  isLoggedIn ? initial : '?',
                   style: const TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w700,
@@ -180,14 +194,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       icon: Icons.sync,
                       label: 'Sincronizzazione',
                       value: isLoggedIn ? 'Attiva' : 'Non attiva',
-                      valueColor: isLoggedIn ? Colors.green.shade600 : Colors.orange.shade600,
+                      valueColor: isLoggedIn
+                          ? Colors.green.shade600
+                          : Colors.orange.shade600,
                     ),
                     Divider(color: Colors.grey.shade200, height: 24),
                     _buildInfoRow(
                       icon: Icons.smartphone,
                       label: 'Voti salvati',
                       value: isLoggedIn ? 'Online' : 'Solo locale',
-                      valueColor: isLoggedIn ? Colors.green.shade600 : Colors.grey.shade600,
+                      valueColor: isLoggedIn
+                          ? Colors.green.shade600
+                          : Colors.grey.shade600,
                     ),
                     if (isLoggedIn) ...[
                       Divider(color: Colors.grey.shade200, height: 24),
@@ -209,10 +227,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Supabase.instance.client.auth.signOut();
-                    },
+                    onPressed: _signOut,
                     icon: const Icon(Icons.logout, size: 20),
                     label: const Text('Esci dall\'account'),
                     style: OutlinedButton.styleFrom(
@@ -236,7 +251,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Icon(Icons.delete_forever, size: 18, color: Colors.red.shade300),
+                        : Icon(Icons.delete_forever,
+                            size: 18, color: Colors.red.shade300),
                     label: Text(
                       _isDeleting ? 'Eliminazione...' : 'Elimina account',
                       style: TextStyle(
@@ -310,7 +326,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
               // Versione app
               Text(
-                'Pagella Sanremo v1.0.0',
+                versionLabel,
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'PlusJakartaSans',
@@ -357,5 +373,4 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       ],
     );
   }
-
 }

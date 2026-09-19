@@ -1,5 +1,7 @@
-import '../models/artist.dart';
+import 'package:pagella_sanremo/features/voting/models/artist.dart';
 
+/// I 30 artisti in gara a Sanremo 2026, nell'ordine di esibizione
+/// della prima serata.
 const artists = [
   Artist('Raf', 'Ora e per sempre'),
   Artist('Tredici Pietro', 'Uomo che cade'),

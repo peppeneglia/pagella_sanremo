@@ -46,3 +46,11 @@ app.*.map.json
 android/key.properties
 **/*.jks
 **/*.keystore
+
+# Configurazione locale (credenziali Supabase, vedi env.example.json)
+env.json
+*.env
+.env.*
+
+# Claude Code
+.claude/settings.local.json

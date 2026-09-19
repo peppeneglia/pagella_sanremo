@@ -78,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
     if (error.contains('Invalid login credentials')) {
       return 'Email o password non corretti';
     }
-if (error.contains('User already registered')) {
+    if (error.contains('User already registered')) {
       return 'Questa email è già registrata';
     }
     if (error.contains('Password should be')) {
@@ -108,7 +108,6 @@ if (error.contains('User already registered')) {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -128,9 +127,7 @@ if (error.contains('User already registered')) {
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -162,9 +159,7 @@ if (error.contains('User already registered')) {
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 24),
-
                 if (_errorMessage != null) ...[
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -191,7 +186,6 @@ if (error.contains('User already registered')) {
                   ),
                   const SizedBox(height: 16),
                 ],
-
                 ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
                   style: ElevatedButton.styleFrom(
@@ -216,9 +210,7 @@ if (error.contains('User already registered')) {
                           style: const TextStyle(fontSize: 16),
                         ),
                 ),
-
                 const SizedBox(height: 16),
-
                 TextButton(
                   onPressed: () {
                     Navigator.pushReplacement(

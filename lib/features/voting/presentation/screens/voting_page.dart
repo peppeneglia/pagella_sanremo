@@ -32,9 +32,7 @@ class VotingPage extends ConsumerWidget {
             }).toList(),
           ),
         ),
-
         const SizedBox(height: 16),
-
         Expanded(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -54,7 +52,8 @@ class VotingPage extends ConsumerWidget {
               children: [
                 Container(
                   color: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: const Row(
                     children: [
                       Expanded(
@@ -120,30 +119,29 @@ class VotingPage extends ConsumerWidget {
                     ],
                   ),
                 ),
-
                 Container(
                   height: 1,
                   color: AppColors.blueDark,
                 ),
-
                 Expanded(
                   child: ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+                    behavior: ScrollConfiguration.of(context)
+                        .copyWith(overscroll: false),
                     child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    itemCount: artists.length,
-                    itemBuilder: (context, index) {
-                      final artist = artists[index];
-                      return VotingRow(
-                        key: ValueKey('${selectedDate}_${artist.name}'),
-                        artistName: artist.name,
-                        subtitle: artist.song,
-                        guest: artist.guest,
-                        coverSong: artist.coverSong,
-                        date: selectedDate,
-                      );
-                    },
-                  ),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      itemCount: artists.length,
+                      itemBuilder: (context, index) {
+                        final artist = artists[index];
+                        return VotingRow(
+                          key: ValueKey('${selectedDate}_${artist.name}'),
+                          artistName: artist.name,
+                          subtitle: artist.song,
+                          guest: artist.guest,
+                          coverSong: artist.coverSong,
+                          date: selectedDate,
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],

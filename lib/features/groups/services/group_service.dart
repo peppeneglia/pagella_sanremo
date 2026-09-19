@@ -138,83 +138,6 @@ class GroupService {
     }
   }
 
-  /// Recupera i membri con statistiche di voto (2 query ottimizzate).
-  /// Ordinati per media decrescente, senza voti in fondo.
-  Future<List<GroupMember>> getGroupMembers(String groupId) async {
-    try {
-      final response = await _client.from('group_members').select('''
-            id,
-            group_id,
-            user_id,
-            joined_at,
-            profiles (
-              username,
-              email
-            )
-          ''').eq('group_id', groupId);
-
-      if ((response as List).isEmpty) return [];
-
-      final userIds = response.map((m) => m['user_id'] as String).toList();
-
-      final allVotes = await _client
-          .from('votes')
-          .select('user_id, canto, testo, look')
-          .inFilter('user_id', userIds);
-
-      final statsMap = <String, Map<String, dynamic>>{};
-      for (final uid in userIds) {
-        statsMap[uid] = {'totalSum': 0.0, 'totalCount': 0, 'voteCount': 0};
-      }
-
-      for (final vote in allVotes as List) {
-        final uid = vote['user_id'] as String;
-        final scores = [vote['canto'], vote['testo'], vote['look']]
-            .whereType<num>()
-            .toList();
-
-        if (scores.isNotEmpty) {
-          statsMap[uid]!['totalSum'] = (statsMap[uid]!['totalSum'] as double) +
-              scores.reduce((a, b) => a + b).toDouble();
-          statsMap[uid]!['totalCount'] =
-              (statsMap[uid]!['totalCount'] as int) + scores.length;
-        }
-        statsMap[uid]!['voteCount'] = (statsMap[uid]!['voteCount'] as int) + 1;
-      }
-
-      final members = response.map<GroupMember>((memberData) {
-        final profile = memberData['profiles'] as Map<String, dynamic>?;
-        final uid = memberData['user_id'] as String;
-        final stats = statsMap[uid]!;
-        final totalCount = stats['totalCount'] as int;
-        final totalSum = stats['totalSum'] as double;
-
-        return GroupMember(
-          id: memberData['id'],
-          groupId: memberData['group_id'],
-          userId: uid,
-          username: profile?['username'] ?? profile?['email'] ?? 'Utente',
-          email: profile?['email'],
-          joinedAt: DateTime.parse(memberData['joined_at']),
-          averageScore: totalCount > 0 ? totalSum / totalCount : null,
-          totalVotes: stats['voteCount'] as int,
-        );
-      }).toList();
-
-      members.sort((a, b) {
-        if (a.averageScore == null && b.averageScore == null) return 0;
-        if (a.averageScore == null) return 1;
-        if (b.averageScore == null) return -1;
-        return b.averageScore!.compareTo(a.averageScore!);
-      });
-
-      return members;
-    } catch (e) {
-      debugPrint('Errore caricamento membri: $e');
-      return [];
-    }
-  }
-
   Future<bool> leaveGroup(String groupId) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return false;
@@ -267,7 +190,8 @@ class GroupService {
       for (final m in membersResponse) {
         final uid = m['user_id'] as String;
         final profile = m['profiles'] as Map<String, dynamic>?;
-        usernameMap[uid] = profile?['username'] ?? profile?['email'] ?? 'Utente';
+        usernameMap[uid] =
+            profile?['username'] ?? profile?['email'] ?? 'Utente';
       }
 
       final votesResponse = await _client
@@ -344,8 +268,10 @@ class GroupService {
 
       return artistData.entries.map((e) {
         final agg = e.value;
-        final avgCanto = agg.cantoCount > 0 ? agg.cantoSum / agg.cantoCount : 0.0;
-        final avgTesto = agg.testoCount > 0 ? agg.testoSum / agg.testoCount : 0.0;
+        final avgCanto =
+            agg.cantoCount > 0 ? agg.cantoSum / agg.cantoCount : 0.0;
+        final avgTesto =
+            agg.testoCount > 0 ? agg.testoSum / agg.testoCount : 0.0;
         final avgLook = agg.lookCount > 0 ? agg.lookSum / agg.lookCount : 0.0;
 
         final totalScores = [
@@ -353,8 +279,9 @@ class GroupService {
           if (avgTesto > 0) avgTesto,
           if (avgLook > 0) avgLook,
         ];
-        final avgTotal =
-            totalScores.isEmpty ? 0.0 : totalScores.reduce((a, b) => a + b) / totalScores.length;
+        final avgTotal = totalScores.isEmpty
+            ? 0.0
+            : totalScores.reduce((a, b) => a + b) / totalScores.length;
 
         return CommunityRanking(
           artistName: e.key,

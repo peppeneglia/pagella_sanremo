@@ -96,7 +96,7 @@ class _VotingRowState extends ConsumerState<VotingRow> {
     // Ascolta i cambiamenti del provider (es. caricamento asincrono da cache/Supabase)
     ref.listen(votesProvider, (_, next) => _syncScores(next));
 
-    final isCoverNight = widget.date == 'VEN 27';
+    final isCoverNight = widget.date == coverNightDate;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -148,9 +148,7 @@ class _VotingRowState extends ConsumerState<VotingRow> {
               ],
             ),
           ),
-
           ..._categories.map(_buildVoteField),
-
           Expanded(
             child: Container(
               height: 36,
@@ -207,86 +205,85 @@ class _VotingRowState extends ConsumerState<VotingRow> {
           borderRadius: BorderRadius.circular(8),
         ),
         child: TextFormField(
-              controller: _controllers[category],
-              textAlign: TextAlign.center,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
-                LengthLimitingTextInputFormatter(4),
-                TextInputFormatter.withFunction((oldValue, newValue) {
-                  if (newValue.text.isEmpty) return newValue;
-                  final text = newValue.text.replaceAll(',', '.');
+          controller: _controllers[category],
+          textAlign: TextAlign.center,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+            LengthLimitingTextInputFormatter(4),
+            TextInputFormatter.withFunction((oldValue, newValue) {
+              if (newValue.text.isEmpty) return newValue;
+              final text = newValue.text.replaceAll(',', '.');
 
-                  // Stato intermedio "X." (l'utente sta per scrivere .5)
-                  if (text.endsWith('.')) {
-                    if (text.indexOf('.') != text.lastIndexOf('.')) {
-                      return oldValue;
-                    }
-                    final prefix =
-                        text.substring(0, text.length - 1);
-                    final n = int.tryParse(prefix);
-                    if (n == null || n < 1 || n > 9) return oldValue;
-                    return newValue;
-                  }
-
-                  final value = double.tryParse(text);
-                  if (value == null || value < 1 || value > 10) {
-                    return oldValue;
-                  }
-
-                  // Solo interi o .5
-                  final remainder = value % 1;
-                  if (remainder != 0.0 && remainder != 0.5) {
-                    return oldValue;
-                  }
-
-                  return newValue;
-                }),
-              ],
-              style: const TextStyle(
-                color: AppColors.blueDark,
-                fontSize: 13,
-                fontFamily: 'PlusJakartaSans',
-                height: 1.0,
-              ),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                disabledBorder: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 10),
-                isDense: true,
-              ),
-              onChanged: (value) {
-                if (_syncing) return;
-
-                if (value.isEmpty) {
-                  HapticFeedback.lightImpact();
-                  setState(() => _scores[category] = null);
-                  ref.read(votesProvider.notifier).removeVote(
-                        widget.date,
-                        widget.artistName,
-                        category,
-                      );
-                  return;
+              // Stato intermedio "X." (l'utente sta per scrivere .5)
+              if (text.endsWith('.')) {
+                if (text.indexOf('.') != text.lastIndexOf('.')) {
+                  return oldValue;
                 }
-                final parsed = value.replaceAll(',', '.');
-                // Ignora stato intermedio "X." (utente sta digitando .5)
-                if (parsed.endsWith('.')) return;
-                final score = double.tryParse(parsed);
-                if (score != null) {
-                  HapticFeedback.selectionClick();
-                  setState(() => _scores[category] = score);
-                  ref.read(votesProvider.notifier).updateVote(
-                        widget.date,
-                        widget.artistName,
-                        category,
-                        score,
-                      );
-                }
-              },
-            ),
+                final prefix = text.substring(0, text.length - 1);
+                final n = int.tryParse(prefix);
+                if (n == null || n < 1 || n > 9) return oldValue;
+                return newValue;
+              }
+
+              final value = double.tryParse(text);
+              if (value == null || value < 1 || value > 10) {
+                return oldValue;
+              }
+
+              // Solo interi o .5
+              final remainder = value % 1;
+              if (remainder != 0.0 && remainder != 0.5) {
+                return oldValue;
+              }
+
+              return newValue;
+            }),
+          ],
+          style: const TextStyle(
+            color: AppColors.blueDark,
+            fontSize: 13,
+            fontFamily: 'PlusJakartaSans',
+            height: 1.0,
+          ),
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(vertical: 10),
+            isDense: true,
+          ),
+          onChanged: (value) {
+            if (_syncing) return;
+
+            if (value.isEmpty) {
+              HapticFeedback.lightImpact();
+              setState(() => _scores[category] = null);
+              ref.read(votesProvider.notifier).removeVote(
+                    widget.date,
+                    widget.artistName,
+                    category,
+                  );
+              return;
+            }
+            final parsed = value.replaceAll(',', '.');
+            // Ignora stato intermedio "X." (utente sta digitando .5)
+            if (parsed.endsWith('.')) return;
+            final score = double.tryParse(parsed);
+            if (score != null) {
+              HapticFeedback.selectionClick();
+              setState(() => _scores[category] = score);
+              ref.read(votesProvider.notifier).updateVote(
+                    widget.date,
+                    widget.artistName,
+                    category,
+                    score,
+                  );
+            }
+          },
+        ),
       ),
     );
   }

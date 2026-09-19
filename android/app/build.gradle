@@ -44,7 +44,9 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.release
+            // Senza key.properties (es. build di un contributor) si usa la
+            // firma debug, così `flutter build apk --release` funziona comunque.
+            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 }

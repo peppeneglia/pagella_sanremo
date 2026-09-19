@@ -8,27 +8,20 @@ final groupServiceProvider = Provider<GroupService>((ref) {
   return GroupService();
 });
 
-final myGroupsProvider = FutureProvider<List<Group>>((ref) async {
+final myGroupsProvider = FutureProvider<List<Group>>((ref) {
   final service = ref.watch(groupServiceProvider);
-  return await service.getMyGroups();
-});
-
-final groupMembersProvider =
-    FutureProvider.family<List<GroupMember>, String>((ref, groupId) async {
-  final service = ref.watch(groupServiceProvider);
-  return await service.getGroupMembers(groupId);
+  return service.getMyGroups();
 });
 
 final groupRankingsProvider =
-    FutureProvider.family<List<CommunityRanking>, String>((ref, groupId) async {
+    FutureProvider.family<List<CommunityRanking>, String>((ref, groupId) {
   final date = ref.watch(selectedDateProvider);
   final service = ref.watch(groupServiceProvider);
   return service.fetchGroupRankings(groupId, date);
 });
 
-final artistMemberVotesProvider = FutureProvider.family<
-    List<MemberArtistVote>,
-    ({String groupId, String artistName, String date})>((ref, params) async {
+final artistMemberVotesProvider = FutureProvider.family<List<MemberArtistVote>,
+    ({String groupId, String artistName, String date})>((ref, params) {
   final service = ref.watch(groupServiceProvider);
   return service.getArtistMemberVotes(
       params.groupId, params.artistName, params.date);

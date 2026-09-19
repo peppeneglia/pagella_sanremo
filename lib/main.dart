@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:pagella_sanremo/config/theme/app_theme.dart';
 import 'package:pagella_sanremo/config/supabase_config.dart';
+import 'package:pagella_sanremo/config/theme/app_theme.dart';
 import 'package:pagella_sanremo/features/auth/presentation/screens/auth_wrapper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Supabase.initialize(
-      url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.anonKey,
+  if (!SupabaseConfig.isConfigured) {
+    throw StateError(
+      'SUPABASE_URL e SUPABASE_ANON_KEY mancanti. '
+      'Avvia con --dart-define-from-file=env.json (vedi env.example.json).',
     );
-  } catch (e) {
-    debugPrint('Errore inizializzazione Supabase: $e');
   }
+
+  await Supabase.initialize(
+    url: SupabaseConfig.url,
+    anonKey: SupabaseConfig.anonKey,
+  );
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

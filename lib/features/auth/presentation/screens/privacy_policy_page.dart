@@ -38,7 +38,6 @@ class PrivacyPolicyPage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 24),
-
               _Section(
                 title: '1. Titolare del trattamento',
                 body:
@@ -46,11 +45,9 @@ class PrivacyPolicyPage extends StatelessWidget {
                     'Per qualsiasi domanda relativa alla presente informativa puoi scrivere a: '
                     'pagellasanremo@gmail.com.',
               ),
-
               _Section(
                 title: '2. Dati raccolti',
-                body:
-                    'L\'App raccoglie i seguenti dati:\n\n'
+                body: 'L\'App raccoglie i seguenti dati:\n\n'
                     '\u2022 Indirizzo email: necessario per la registrazione e l\'autenticazione.\n'
                     '\u2022 Username: scelto dall\'utente, visibile ai membri dei gruppi.\n'
                     '\u2022 Voti: le valutazioni assegnate agli artisti (canto, testo, look) per ciascuna serata.\n'
@@ -58,7 +55,6 @@ class PrivacyPolicyPage extends StatelessWidget {
                     'L\'App non raccoglie dati di geolocalizzazione, contatti, foto, '
                     'ne altre informazioni personali oltre a quelle elencate.',
               ),
-
               _Section(
                 title: '3. Modalita anonima',
                 body:
@@ -66,7 +62,6 @@ class PrivacyPolicyPage extends StatelessWidget {
                     'i voti vengono salvati esclusivamente sul dispositivo e nessun dato personale '
                     'viene trasmesso ai nostri server.',
               ),
-
               _Section(
                 title: '4. Finalita del trattamento',
                 body: 'I dati vengono utilizzati esclusivamente per:\n\n'
@@ -75,7 +70,6 @@ class PrivacyPolicyPage extends StatelessWidget {
                     '\u2022 Calcolare e visualizzare le classifiche personali, community e di gruppo.\n'
                     '\u2022 Permettere la creazione e la partecipazione ai gruppi.',
               ),
-
               _Section(
                 title: '5. Conservazione dei dati',
                 body:
@@ -84,7 +78,6 @@ class PrivacyPolicyPage extends StatelessWidget {
                     'del proprio account e di tutti i dati associati in qualsiasi momento contattando '
                     'il titolare del trattamento.',
               ),
-
               _Section(
                 title: '6. Condivisione dei dati',
                 body:
@@ -92,14 +85,12 @@ class PrivacyPolicyPage extends StatelessWidget {
                     'commerciali. I voti dell\'utente sono visibili solo ai membri dei gruppi a cui partecipa. '
                     'Le classifiche community mostrano dati aggregati e anonimi.',
               ),
-
               _Section(
                 title: '7. Servizi di terze parti',
                 body: 'L\'App utilizza i seguenti servizi:\n\n'
                     '\u2022 Supabase: per autenticazione, database e storage (https://supabase.com/privacy).\n\n'
                     'Ciascun servizio tratta i dati secondo la propria informativa sulla privacy.',
               ),
-
               _Section(
                 title: '8. Diritti dell\'utente',
                 body:
@@ -111,7 +102,6 @@ class PrivacyPolicyPage extends StatelessWidget {
                     '\u2022 Richiedere la portabilita dei dati.\n\n'
                     'Per esercitare questi diritti, contatta pagellasanremo@gmail.com.',
               ),
-
               _Section(
                 title: '9. Sicurezza',
                 body:
@@ -119,7 +109,6 @@ class PrivacyPolicyPage extends StatelessWidget {
                     'a livello di riga (Row Level Security) e autenticazione sicura. '
                     'Adottiamo misure tecniche e organizzative adeguate per proteggere i tuoi dati.',
               ),
-
               _Section(
                 title: '10. Modifiche alla Privacy Policy',
                 body:
@@ -127,7 +116,6 @@ class PrivacyPolicyPage extends StatelessWidget {
                     'l\'utente verra informato tramite l\'App. L\'uso continuato dell\'App dopo le modifiche '
                     'costituisce accettazione della nuova informativa.',
               ),
-
               SizedBox(height: 16),
             ],
           ),

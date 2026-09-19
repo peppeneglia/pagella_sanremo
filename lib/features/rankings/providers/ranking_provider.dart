@@ -39,14 +39,12 @@ class RankedArtist {
   });
 }
 
+/// Classifica personale per la serata selezionata, calcolata sui voti locali.
 final rankingProvider =
     Provider.family<List<RankedArtist>, RankingType>((ref, type) {
   final votes = ref.watch(votesProvider);
   final selectedDate = ref.watch(selectedDateProvider);
-
-  final allArtists = selectedDate == 'VEN 27'
-      ? coverNightArtists
-      : ref.watch(artistsForDateProvider(selectedDate));
+  final allArtists = ref.watch(artistsForDateProvider(selectedDate));
 
   final dateVotes = votes[selectedDate] ?? {};
 
@@ -72,19 +70,18 @@ final rankingProvider =
   if (votedArtists.isEmpty) return [];
 
   votedArtists.sort((a, b) {
-    final aVotes = Map<String, double>.from(dateVotes[a.name] ?? {});
-    final bVotes = Map<String, double>.from(dateVotes[b.name] ?? {});
+    final aVotes = dateVotes[a.name] ?? {};
+    final bVotes = dateVotes[b.name] ?? {};
     return _calculateFinalScore(bVotes, type)
         .compareTo(_calculateFinalScore(aVotes, type));
   });
 
   return votedArtists.asMap().entries.map((entry) {
-    final artistVotes =
-        Map<String, double>.from(dateVotes[entry.value.name] ?? {});
+    final artistVotes = dateVotes[entry.value.name] ?? {};
     final categoryScores = {
-      'CANTO': artistVotes['CANTO'] ?? 0,
-      'TESTO': artistVotes['TESTO'] ?? 0,
-      'LOOK': artistVotes['LOOK'] ?? 0,
+      'CANTO': artistVotes['CANTO'] ?? 0.0,
+      'TESTO': artistVotes['TESTO'] ?? 0.0,
+      'LOOK': artistVotes['LOOK'] ?? 0.0,
     };
 
     return RankedArtist(

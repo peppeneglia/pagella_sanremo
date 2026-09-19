@@ -19,17 +19,14 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'PlusJakartaSans',
-
       primaryColor: AppColors.blueDark,
       scaffoldBackgroundColor: AppColors.background,
-
       colorScheme: const ColorScheme.light(
         primary: AppColors.blueDark,
         secondary: AppColors.blueLight,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
       ),
-
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -44,7 +41,6 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-
       textTheme: const TextTheme(
         displayLarge: TextStyle(
           fontSize: 32,
@@ -97,7 +93,6 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.transparent,
@@ -120,7 +115,6 @@ class AppTheme {
           borderSide: const BorderSide(color: Colors.red),
         ),
       ),
-
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
@@ -129,7 +123,6 @@ class AppTheme {
           side: const BorderSide(color: AppColors.border),
         ),
       ),
-
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.background,
         selectedItemColor: AppColors.blueDark,
@@ -147,7 +140,6 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
-
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.blueDark,
@@ -163,7 +155,6 @@ class AppTheme {
           ),
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.blueDark,
@@ -173,7 +164,6 @@ class AppTheme {
           ),
         ),
       ),
-
       dividerTheme: const DividerThemeData(
         color: AppColors.border,
         thickness: 1,
